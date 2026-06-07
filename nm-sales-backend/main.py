@@ -7,13 +7,13 @@ import psycopg2
 import os
 from dotenv import load_dotenv
 
-load_dotenv()  # reads DATABASE_URL from .env
+load_dotenv()
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace * with John's exact URL
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -23,9 +23,12 @@ class Sale(BaseModel):
     title: str
     address: str
     city: str
-    sale_date: date
+    zip: Optional[str] = None
+    date: date
     start_time: time
+    end_time: Optional[time] = None
     description: Optional[str] = None
+    categories: Optional[str] = None
 
 
 def get_db_connection():
@@ -43,7 +46,7 @@ def get_sales():
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT id, title, address, city, sale_date, start_time, description FROM sales"
+        "SELECT id, title, address, city, zip, date, start_time, end_time, description, categories FROM sales"
     )
     rows = cursor.fetchall()
     conn.close()
@@ -53,9 +56,12 @@ def get_sales():
             "title": r[1],
             "address": r[2],
             "city": r[3],
-            "date": str(r[4]),
-            "time": str(r[5]),
-            "description": r[6],
+            "zip": r[4],
+            "date": str(r[5]),
+            "start_time": str(r[6]),
+            "end_time": str(r[7]),
+            "description": r[8],
+            "categories": r[9],
         }
         for r in rows
     ]
@@ -66,7 +72,7 @@ def get_sale(sale_id: int):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT id, title, address, city, sale_date, start_time, description FROM sales WHERE id = %s",
+        "SELECT id, title, address, city, zip, date, start_time, end_time, description, categories FROM sales WHERE id = %s",
         (sale_id,),
     )
     row = cursor.fetchone()
@@ -78,9 +84,12 @@ def get_sale(sale_id: int):
         "title": row[1],
         "address": row[2],
         "city": row[3],
-        "date": str(row[4]),
-        "time": str(row[5]),
-        "description": row[6],
+        "zip": row[4],
+        "date": str(row[5]),
+        "start_time": str(row[6]),
+        "end_time": str(row[7]),
+        "description": row[8],
+        "categories": row[9],
     }
 
 
@@ -90,11 +99,12 @@ def create_sale(sale: Sale):
     cursor = conn.cursor()
     cursor.execute(
         """
-        INSERT INTO sales (title, address, city, sale_date, start_time, description)
-        VALUES (%s, %s, %s, %s, %s, %s)
+        INSERT INTO sales (title, address, city, zip, date, start_time, end_time, description, categories)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id
         """,
-        (sale.title, sale.address, sale.city, sale.sale_date, sale.start_time, sale.description),
+        (sale.title, sale.address, sale.city, sale.zip, sale.date,
+         sale.start_time, sale.end_time, sale.description, sale.categories),
     )
     new_id = cursor.fetchone()[0]
     conn.commit()
