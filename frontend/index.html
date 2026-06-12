@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>YardHop — Find Yard, Garage & Estate Sales Near You</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <!-- Google Maps loads dynamically from JavaScript once you set
        GOOGLE_MAPS_API_KEY in the CONFIG block inside the <script> at the
-       bottom of this file. No key = the app stays in offline/mock mode. -->
+       bottom of this file. -->
   <style>
 /* ============================================
    YARDHOP — STYLES.CSS
@@ -25,9 +26,9 @@
   --text: #1a1714;
   --text-2: #5a5550;
   --text-3: #9a948e;
-  --blue: #2563eb;
-  --blue-dark: #1d4ed8;
-  --blue-light: #dbeafe;
+  --blue: #3DB2FF;
+  --blue-dark: #1a96e0;
+  --blue-light: #e0f4ff;
   --orange: #f97316;
   --orange-light: #fff7ed;
   --green: #16a34a;
@@ -45,13 +46,14 @@
   --radius-lg: 20px;
   --radius-sm: 8px;
   --nav-h: 68px;
-  --font-display: 'Syne', sans-serif;
-  --font-body: 'DM Sans', sans-serif;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --transition: 0.2s cubic-bezier(.4,0,.2,1);
 }
 
 [data-theme="dark"] {
   --bg: #111010;
+  --icon-filter: invert(1);
   --bg-alt: #1a1918;
   --bg-card: #1e1d1b;
   --surface: #252320;
@@ -59,9 +61,9 @@
   --text: #f5f3f0;
   --text-2: #a8a49f;
   --text-3: #6b6762;
-  --blue: #3b82f6;
-  --blue-dark: #2563eb;
-  --blue-light: #1e3a5f;
+  --blue: #3DB2FF;
+  --blue-dark: #1a96e0;
+  --blue-light: #0c2d4a;
   --orange-light: #2a1a0a;
   --green-light: #0a1f10;
   --red-light: #2a0a0a;
@@ -195,12 +197,13 @@ button { cursor: pointer; font-family: var(--font-body); }
 [data-theme="dark"] .theme-icon.sun { opacity: 0; transform: scale(0.5); }
 [data-theme="dark"] .theme-icon.moon { opacity: 1; transform: scale(1); }
 .hamburger {
-  display: none;
+  display: flex;
   flex-direction: column;
   gap: 5px;
   background: none;
   border: none;
   padding: .4rem;
+  cursor: pointer;
 }
 .hamburger span {
   display: block;
@@ -210,6 +213,257 @@ button { cursor: pointer; font-family: var(--font-body); }
   border-radius: 2px;
   transition: all var(--transition);
 }
+
+/* ---- FORM DATE/TIME WARNINGS ---- */
+.field-warning {
+  display: none;
+  align-items: center;
+  gap: .4rem;
+  margin-top: .4rem;
+  padding: .45rem .75rem;
+  background: var(--red-light);
+  color: var(--red);
+  border-radius: var(--radius-sm);
+  font-size: .82rem;
+  font-weight: 500;
+  border: 1px solid rgba(220,38,38,.2);
+}
+.field-warning.visible { display: flex; }
+
+/* ---- CUSTOM TIME PICKER ---- */
+.time-picker-wrap { position: relative; }
+.time-picker-display {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .55rem .9rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: .95rem;
+  color: var(--text);
+  transition: border-color var(--transition);
+  user-select: none;
+}
+.time-picker-display:hover,
+.time-picker-display.open { border-color: var(--blue); }
+.time-picker-display.invalid { border-color: var(--red); }
+.time-picker-val { flex: 1; }
+.time-picker-placeholder { color: var(--text-3); }
+.time-picker-arrow { color: var(--text-3); font-size: .75rem; transition: transform var(--transition); }
+.time-picker-display.open .time-picker-arrow { transform: rotate(180deg); }
+.time-picker-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + .4rem);
+  left: 0;
+  z-index: 400;
+  background: var(--bg-alt);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  padding: 1rem;
+  min-width: 230px;
+}
+.time-picker-panel.open { display: block; }
+.time-picker-selects {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  margin-bottom: .9rem;
+}
+.time-picker-sel {
+  flex: 1;
+  padding: .45rem .4rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1.05rem;
+  text-align: center;
+  font-family: var(--font-body);
+  outline: none;
+  cursor: pointer;
+}
+.time-picker-sel:focus { border-color: var(--blue); }
+.time-sep { font-size: 1.2rem; font-weight: 700; color: var(--text-2); flex-shrink: 0; }
+.ampm-toggle { display: flex; flex-direction: column; gap: .25rem; flex-shrink: 0; }
+.ampm-btn {
+  padding: .28rem .52rem;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: .72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition);
+  line-height: 1;
+}
+.ampm-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+.time-picker-footer {
+  display: flex;
+  gap: .5rem;
+  justify-content: flex-end;
+}
+
+/* ---- MENU DRAWER ---- */
+.menu-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 500;
+}
+.menu-overlay.open { display: block; }
+.menu-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 320px;
+  max-width: 92vw;
+  background: var(--bg-alt);
+  z-index: 501;
+  transform: translateX(100%);
+  transition: transform .28s cubic-bezier(.4,0,.2,1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: -4px 0 24px rgba(0,0,0,.18);
+}
+.menu-drawer.open { transform: translateX(0); }
+.menu-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.25rem 1rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.menu-drawer-header h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin: 0;
+}
+.menu-drawer-close {
+  background: var(--surface);
+  border: none;
+  color: var(--text-2);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: .3rem .55rem;
+  border-radius: var(--radius-sm);
+  line-height: 1;
+  transition: background var(--transition);
+}
+.menu-drawer-close:hover { background: var(--border); color: var(--text); }
+.menu-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+.drawer-section { margin-bottom: 2rem; }
+.drawer-section-title {
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--text-3);
+  margin-bottom: .75rem;
+}
+.drawer-listing-item {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .65rem .75rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  margin-bottom: .45rem;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.drawer-listing-item:hover { background: var(--border); }
+.drawer-listing-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  background: var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  overflow: hidden;
+}
+.drawer-listing-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.drawer-listing-info { flex: 1; min-width: 0; }
+.drawer-listing-title {
+  font-weight: 600;
+  font-size: .85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+.drawer-listing-meta { font-size: .73rem; color: var(--text-3); margin-top: .15rem; }
+.drawer-delete-btn {
+  background: none;
+  border: none;
+  color: var(--red);
+  padding: .35rem .4rem;
+  cursor: pointer;
+  border-radius: 4px;
+  flex-shrink: 0;
+  font-size: .8rem;
+  opacity: .65;
+  transition: opacity .15s, background .15s;
+  line-height: 1;
+}
+.drawer-delete-btn:hover { opacity: 1; background: var(--red-light); }
+.drawer-unfav-btn { background: none; border: none; color: #e11d48; padding: .35rem .4rem; cursor: pointer; border-radius: 4px; flex-shrink: 0; font-size: 1rem; opacity: .8; transition: opacity .15s, background .15s; line-height: 1; }
+.drawer-unfav-btn:hover { opacity: 1; background: var(--red-light); }
+.drawer-delete-confirm { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: .35rem .1rem; gap: .75rem; }
+.drawer-delete-confirm span { font-size: .83rem; color: var(--text-2); }
+.drawer-delete-actions { display: flex; gap: .45rem; flex-shrink: 0; }
+.drawer-empty {
+  color: var(--text-3);
+  font-size: .85rem;
+  padding: .25rem 0 .5rem;
+}
+.drawer-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.drawer-nav-link {
+  padding: .6rem .75rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  font-weight: 500;
+  font-size: .9rem;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+  background: none;
+  border: none;
+  text-align: left;
+  width: 100%;
+}
+.drawer-nav-link:hover { background: var(--surface); color: var(--text); }
+.drawer-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .5rem 0;
+}
+.drawer-toggle-label { font-weight: 600; font-size: .9rem; color: var(--text); }
+.drawer-toggle-sub { font-size: .78rem; color: var(--text-3); margin-top: .1rem; }
 
 /* ---- BOTTOM NAV ---- */
 .bottom-nav {
@@ -268,9 +522,9 @@ button { cursor: pointer; font-family: var(--font-body); }
 .btn-primary {
   background: var(--blue);
   color: #fff;
-  box-shadow: 0 2px 8px rgba(37,99,235,.3);
+  box-shadow: 0 2px 8px rgba(61,178,255,.3);
 }
-.btn-primary:hover { background: var(--blue-dark); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(37,99,235,.4); }
+.btn-primary:hover { background: var(--blue-dark); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(61,178,255,.4); }
 .btn-ghost { background: transparent; color: var(--text-2); border: 1.5px solid var(--border); }
 .btn-ghost:hover { border-color: var(--blue); color: var(--blue); }
 .btn-white { background: #fff; color: #1a1714; box-shadow: var(--shadow); }
@@ -307,7 +561,7 @@ button { cursor: pointer; font-family: var(--font-body); }
 }
 .section-header h2 {
   font-family: var(--font-display);
-  font-size: 1.75rem;
+  font-size: 2.25rem;
   font-weight: 700;
 }
 .section-header p { color: var(--text-2); font-size: .9rem; }
@@ -328,12 +582,12 @@ button { cursor: pointer; font-family: var(--font-body); }
 .hero-bg {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(37,99,235,.12) 0%, transparent 70%),
+  background: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(61,178,255,.12) 0%, transparent 70%),
               radial-gradient(ellipse 50% 40% at 85% 100%, rgba(249,115,22,.08) 0%, transparent 60%);
   pointer-events: none;
 }
 [data-theme="dark"] .hero-bg {
-  background: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(59,130,246,.15) 0%, transparent 70%),
+  background: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(61,178,255,.15) 0%, transparent 70%),
               radial-gradient(ellipse 50% 40% at 85% 100%, rgba(249,115,22,.1) 0%, transparent 60%);
 }
 .hero-content {
@@ -440,6 +694,7 @@ button { cursor: pointer; font-family: var(--font-body); }
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.25rem;
+  align-items: stretch;
 }
 .category-card {
   background: var(--bg-card);
@@ -450,6 +705,11 @@ button { cursor: pointer; font-family: var(--font-body); }
   transition: all var(--transition);
   position: relative;
   overflow: hidden;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 .category-card::before {
   content: '';
@@ -459,11 +719,11 @@ button { cursor: pointer; font-family: var(--font-body); }
   transition: opacity var(--transition);
 }
 .cat-yard::before { background: linear-gradient(135deg, rgba(22,163,74,.08), transparent); }
-.cat-garage::before { background: linear-gradient(135deg, rgba(37,99,235,.08), transparent); }
+.cat-garage::before { background: linear-gradient(135deg, rgba(61,178,255,.08), transparent); }
 .cat-estate::before { background: linear-gradient(135deg, rgba(124,58,237,.08), transparent); }
 .category-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: transparent; }
 .category-card:hover::before { opacity: 1; }
-.cat-icon { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+.cat-icon { font-size: 4.5rem; margin-bottom: 1rem; display: block; }
 .category-card h3 { font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; margin-bottom: .4rem; }
 .category-card p { color: var(--text-2); font-size: .9rem; margin-bottom: 1rem; line-height: 1.5; }
 .cat-count {
@@ -479,6 +739,26 @@ button { cursor: pointer; font-family: var(--font-body); }
 .cat-garage .cat-count { background: var(--blue-light); color: var(--blue); }
 .cat-estate .cat-count { background: #ede9fe; color: var(--purple); }
 
+/* ---- ENDED SALE ---- */
+.listing-card.ended .card-img { position: relative; }
+.listing-card.ended .card-img::after { content: 'SALE ENDED'; position: absolute; inset: 0; background: rgba(0,0,0,.52); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 1rem; letter-spacing: .12em; z-index: 10; pointer-events: none; }
+
+/* ---- SELLER INFO ---- */
+.seller-info { margin-top: 1.5rem; padding: 1.25rem; background: var(--surface); border-radius: var(--radius-lg); }
+.seller-info-title { font-size: .78rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: .7rem; }
+.seller-row { display: flex; align-items: center; gap: .55rem; font-size: .95rem; color: var(--text); margin-bottom: .35rem; }
+
+/* ---- MANAGE BAR ---- */
+.detail-manage-bar { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; margin-top: 1rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+.detail-manage-bar .manage-label { font-size: .78rem; font-weight: 600; color: var(--text-2); width: 100%; margin-bottom: -.2rem; }
+.delete-confirm-box { margin-top: .75rem; padding: 1rem 1.25rem; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); display: flex; flex-direction: column; gap: .75rem; }
+.delete-confirm-box p { font-size: .9rem; color: var(--text-2); margin: 0; }
+.delete-confirm-actions { display: flex; gap: .75rem; }
+
+/* ---- SORT SELECTOR ---- */
+.sort-selector { display: flex; align-items: center; gap: .6rem; }
+.sort-selector label { font-size: .875rem; color: var(--text-2); white-space: nowrap; font-weight: 500; }
+
 /* ============================================
    LISTING CARDS
    ============================================ */
@@ -486,6 +766,10 @@ button { cursor: pointer; font-family: var(--font-body); }
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.25rem;
+  justify-items: center;
+}
+.listings-grid .listing-card {
+  width: 100%;
 }
 .listing-card {
   background: var(--bg-card);
@@ -547,7 +831,7 @@ button { cursor: pointer; font-family: var(--font-body); }
   backdrop-filter: blur(8px);
 }
 .badge-yard { background: rgba(22,163,74,.9); color: #fff; }
-.badge-garage { background: rgba(37,99,235,.9); color: #fff; }
+.badge-garage { background: rgba(61,178,255,.9); color: #fff; }
 .badge-estate { background: rgba(124,58,237,.9); color: #fff; }
 .badge-discount { background: rgba(249,115,22,.95); color: #fff; }
 .fav-btn {
@@ -568,12 +852,12 @@ button { cursor: pointer; font-family: var(--font-body); }
   z-index: 2;
 }
 .fav-btn:hover { transform: scale(1.15); }
-.fav-btn { color: #1a1714; font-size: 1.1rem; }
-.fav-btn.active { background: rgba(220,38,38,.1); color: var(--red); }
+.fav-btn { color: rgba(0,0,0,.45); font-size: 1.15rem; }
+.fav-btn.active { background: rgba(220,38,38,.12); color: #dc2626; }
 .card-body { padding: 1rem 1.1rem 1.1rem; }
 .card-title {
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 1.2rem;
   font-weight: 700;
   margin-bottom: .4rem;
   line-height: 1.3;
@@ -612,16 +896,16 @@ button { cursor: pointer; font-family: var(--font-body); }
    MAP PREVIEW
    ============================================ */
 .map-preview { border-radius: var(--radius-lg); overflow: hidden; cursor: pointer; }
-.map-mock {
+.map-placeholder {
   height: 300px;
   background: linear-gradient(135deg, #e8f4f8 0%, #d1e8f0 50%, #c0dce8 100%);
   position: relative;
   overflow: hidden;
 }
-[data-theme="dark"] .map-mock {
+[data-theme="dark"] .map-placeholder {
   background: linear-gradient(135deg, #1a2535 0%, #1e2e40 50%, #1a2535 100%);
 }
-.map-mock.tall { height: 500px; }
+.map-placeholder.tall { height: 500px; }
 .map-overlay {
   position: absolute;
   inset: 0;
@@ -660,7 +944,7 @@ button { cursor: pointer; font-family: var(--font-body); }
    CTA SECTION
    ============================================ */
 .cta-section {
-  background: linear-gradient(135deg, var(--blue) 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, var(--blue) 0%, #1a96e0 100%);
   padding: 5rem 1.5rem;
   text-align: center;
   position: relative;
@@ -797,7 +1081,20 @@ button { cursor: pointer; font-family: var(--font-body); }
   transition: all var(--transition);
   width: 100%;
 }
-.form-control:focus { border-color: var(--blue); background: var(--bg-card); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+.form-control:focus { border-color: var(--blue); background: var(--bg-card); box-shadow: 0 0 0 3px rgba(61,178,255,.1); }
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-year-field { border-radius: 2px; }
+input[type="date"]::-webkit-datetime-edit-day-field:focus,
+input[type="date"]::-webkit-datetime-edit-month-field:focus,
+input[type="date"]::-webkit-datetime-edit-year-field:focus {
+  background-color: var(--surface) !important;
+  color: var(--text) !important;
+  outline: none;
+}
+input[type="date"]:focus { outline: none; }
+input[type="date"]::-webkit-datetime-edit { color: var(--text); }
+input[type="date"]::-webkit-calendar-picker-indicator { opacity: .5; cursor: pointer; filter: var(--icon-filter, none); }
 .form-control[readonly] { opacity: .6; cursor: not-allowed; }
 textarea.form-control { resize: vertical; min-height: 100px; }
 .form-hint { color: var(--text-3); font-size: .8rem; margin-top: .5rem; }
@@ -905,12 +1202,60 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 }
 .photo-preview-item {
   position: relative;
-  aspect-ratio: 1;
+  aspect-ratio: 7 / 5;
   border-radius: var(--radius-sm);
   overflow: hidden;
-  border: 1.5px solid var(--border);
+  border: 2px solid var(--border);
+  transition: border-color var(--transition);
 }
-.photo-preview-item img { width: 100%; height: 100%; object-fit: cover; }
+.photo-preview-item.is-cover { border-color: var(--blue); }
+.photo-preview-item img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.photo-cover-badge {
+  position: absolute;
+  bottom: .35rem;
+  left: .35rem;
+  background: var(--blue);
+  color: #fff;
+  font-size: .65rem;
+  font-weight: 700;
+  padding: .15rem .5rem;
+  border-radius: 99px;
+  pointer-events: none;
+  letter-spacing: .02em;
+}
+.photo-set-cover-btn {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  color: #fff;
+  font-size: .75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .15s;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  border-radius: 0;
+}
+.photo-preview-item:hover .photo-set-cover-btn { opacity: 1; }
+.photo-adjust-btn {
+  position: absolute;
+  bottom: .35rem;
+  right: .35rem;
+  background: rgba(0,0,0,.65);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: .2rem .5rem;
+  font-size: .7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+}
+.photo-adjust-btn:hover { background: var(--blue); }
 .photo-remove {
   position: absolute;
   top: .3rem;
@@ -926,7 +1271,68 @@ textarea.form-control { resize: vertical; min-height: 100px; }
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  z-index: 2;
 }
+/* ---- CROP MODAL ---- */
+.crop-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  z-index: 700;
+  align-items: center;
+  justify-content: center;
+}
+.crop-modal-overlay.open { display: flex; }
+.crop-modal {
+  background: var(--bg-alt);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  width: 380px;
+  max-width: 95vw;
+  box-shadow: 0 24px 64px rgba(0,0,0,.35);
+}
+.crop-modal h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: .35rem;
+}
+.crop-modal-hint {
+  color: var(--text-3);
+  font-size: .8rem;
+  margin-bottom: 1rem;
+}
+.crop-frame-wrap {
+  width: 100%;
+  aspect-ratio: 7 / 5;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  position: relative;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  background: var(--surface);
+  margin-bottom: 1rem;
+}
+.crop-frame-wrap:active { cursor: grabbing; }
+.crop-frame-wrap img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+.crop-zoom-row {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: 1.25rem;
+}
+.crop-zoom-row label { font-size: .82rem; color: var(--text-2); white-space: nowrap; font-weight: 500; }
+.crop-zoom-row input[type=range] { flex: 1; accent-color: var(--blue); }
+.crop-zoom-val { font-size: .8rem; color: var(--text-3); min-width: 36px; text-align: right; }
+.crop-actions { display: flex; gap: .75rem; justify-content: flex-end; }
 
 /* ============================================
    NEARBY PAGE
@@ -1071,7 +1477,6 @@ textarea.form-control { resize: vertical; min-height: 100px; }
   :root { --nav-h: 60px; }
   .navbar { height: var(--nav-h); }
   .nav-links { display: none; }
-  .hamburger { display: flex; }
   .nav-links.open {
     display: flex;
     flex-direction: column;
@@ -1108,7 +1513,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
   .footer-inner { grid-template-columns: 1fr; }
   .hero-title { font-size: 2rem; }
   .page-header h1 { font-size: 1.75rem; }
-  .map-mock.tall { height: 350px; }
+  .map-placeholder.tall { height: 350px; }
 }
 
 </style>
@@ -1208,19 +1613,19 @@ textarea.form-control { resize: vertical; min-height: 100px; }
               <div class="cat-icon">🌳</div>
               <h3>Yard Sales</h3>
               <p>Open-air treasures in front yards and driveways</p>
-              <span class="cat-count">1,204 active</span>
+              <span class="cat-count" id="countYard">0 active</span>
             </div>
             <div class="category-card cat-garage" onclick="filterByCategory('garage')">
               <div class="cat-icon">🧰</div>
               <h3>Garage Sales</h3>
               <p>Household items, tools, furniture & more</p>
-              <span class="cat-count">987 active</span>
+              <span class="cat-count" id="countGarage">0 active</span>
             </div>
             <div class="category-card cat-estate" onclick="filterByCategory('estate')">
               <div class="cat-icon">🪞</div>
               <h3>Estate Sales</h3>
               <p>Collections from entire estates</p>
-              <span class="cat-count">656 active</span>
+              <span class="cat-count" id="countEstate">0 active</span>
             </div>
           </div>
         </div>
@@ -1245,11 +1650,11 @@ textarea.form-control { resize: vertical; min-height: 100px; }
             <a href="#" class="see-all" onclick="showPage('map')">Open full map →</a>
           </div>
           <div class="map-preview" onclick="showPage('map')">
-            <div class="map-mock" id="mapPreview">
+            <div class="map-placeholder" id="mapPreview">
               <div class="map-overlay">
                 <button class="btn btn-white">Open Full Map</button>
               </div>
-              <div id="mapMockPins"></div>
+              <div id="mapPins"></div>
             </div>
           </div>
         </div>
@@ -1331,15 +1736,23 @@ textarea.form-control { resize: vertical; min-height: 100px; }
             <div class="form-grid">
               <div class="form-group full">
                 <label>Sale Title *</label>
-                <input type="text" class="form-control" placeholder="e.g. Big Spring Yard Sale — Moving Out!" required />
+                <input type="text" class="form-control" id="titleInput" placeholder="e.g. Big Spring Yard Sale — Moving Out!" required />
               </div>
               <div class="form-group full">
                 <label>Description *</label>
-                <textarea class="form-control" rows="4" placeholder="Describe what you're selling, any highlights, special items, etc." required></textarea>
+                <textarea class="form-control" id="descriptionInput" rows="4" placeholder="Describe what you're selling, any highlights, special items, etc." required></textarea>
+              </div>
+              <div class="form-group">
+                <label>Your Name *</label>
+                <input type="text" class="form-control" id="sellerNameInput" placeholder="e.g. Sarah Johnson" required />
+              </div>
+              <div class="form-group">
+                <label>Contact (phone or email) *</label>
+                <input type="text" class="form-control" id="sellerContactInput" placeholder="e.g. (505) 555-1234" required />
               </div>
               <div class="form-group">
                 <label>Category *</label>
-                <select class="form-control" required>
+                <select class="form-control" id="categoryInput" required>
                   <option value="">Select a category…</option>
                   <option value="yard">Yard Sale</option>
                   <option value="garage">Garage Sale</option>
@@ -1349,19 +1762,67 @@ textarea.form-control { resize: vertical; min-height: 100px; }
               <div class="form-group"></div>
               <div class="form-group">
                 <label>Start Date *</label>
-                <input type="date" class="form-control" required />
+                <input type="date" class="form-control" id="startDateInput" required onclick="try{this.showPicker()}catch(e){}" oninput="validateStartDate();validateStartTime();validateEndDate();validateEndTime()" onchange="validateStartDate();validateStartTime();validateEndDate();validateEndTime()" />
+                <div class="field-warning" id="startDateWarning">⚠ Start date can't be in the past</div>
               </div>
               <div class="form-group">
                 <label>End Date *</label>
-                <input type="date" class="form-control" required />
+                <input type="date" class="form-control" id="endDateInput" required onclick="try{this.showPicker()}catch(e){}" oninput="validateEndDate();validateEndTime()" onchange="validateEndDate();validateEndTime()" />
+                <div class="field-warning" id="endDateWarning">⚠ End date can't be before start date</div>
               </div>
               <div class="form-group">
                 <label>Start Time *</label>
-                <input type="time" class="form-control" required />
+                <div class="time-picker-wrap" id="startTimeWrap">
+                  <div class="time-picker-display" id="startTimeDisplay" onclick="openTimePicker('start')">
+                    <span>🕐</span>
+                    <span class="time-picker-val time-picker-placeholder" id="startTimeVal">Select time…</span>
+                    <span class="time-picker-arrow">▾</span>
+                  </div>
+                  <input type="hidden" id="startTimeInput" />
+                  <div class="time-picker-panel" id="startTimePanel">
+                    <div class="time-picker-selects">
+                      <select class="time-picker-sel" id="startTimeHour" onchange="timePickerState.start.hour=parseInt(this.value)"></select>
+                      <span class="time-sep">:</span>
+                      <select class="time-picker-sel" id="startTimeMin" onchange="timePickerState.start.min=parseInt(this.value)"></select>
+                      <div class="ampm-toggle">
+                        <button type="button" class="ampm-btn active" id="startTimeAM" onclick="setPickerAmPm('start','AM')">AM</button>
+                        <button type="button" class="ampm-btn" id="startTimePM" onclick="setPickerAmPm('start','PM')">PM</button>
+                      </div>
+                    </div>
+                    <div class="time-picker-footer">
+                      <button type="button" class="btn btn-ghost" style="font-size:.82rem;padding:.35rem .75rem" onclick="cancelTimePicker('start')">Cancel</button>
+                      <button type="button" class="btn btn-primary" style="font-size:.82rem;padding:.35rem .75rem" onclick="confirmTimePicker('start')">OK</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="field-warning" id="startTimeWarning">⚠ Start time can't be in the past</div>
               </div>
               <div class="form-group">
                 <label>End Time *</label>
-                <input type="time" class="form-control" required />
+                <div class="time-picker-wrap" id="endTimeWrap">
+                  <div class="time-picker-display" id="endTimeDisplay" onclick="openTimePicker('end')">
+                    <span>🕐</span>
+                    <span class="time-picker-val time-picker-placeholder" id="endTimeVal">Select time…</span>
+                    <span class="time-picker-arrow">▾</span>
+                  </div>
+                  <input type="hidden" id="endTimeInput" />
+                  <div class="time-picker-panel" id="endTimePanel">
+                    <div class="time-picker-selects">
+                      <select class="time-picker-sel" id="endTimeHour" onchange="timePickerState.end.hour=parseInt(this.value)"></select>
+                      <span class="time-sep">:</span>
+                      <select class="time-picker-sel" id="endTimeMin" onchange="timePickerState.end.min=parseInt(this.value)"></select>
+                      <div class="ampm-toggle">
+                        <button type="button" class="ampm-btn active" id="endTimeAM" onclick="setPickerAmPm('end','AM')">AM</button>
+                        <button type="button" class="ampm-btn" id="endTimePM" onclick="setPickerAmPm('end','PM')">PM</button>
+                      </div>
+                    </div>
+                    <div class="time-picker-footer">
+                      <button type="button" class="btn btn-ghost" style="font-size:.82rem;padding:.35rem .75rem" onclick="cancelTimePicker('end')">Cancel</button>
+                      <button type="button" class="btn btn-primary" style="font-size:.82rem;padding:.35rem .75rem" onclick="confirmTimePicker('end')">OK</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="field-warning" id="endTimeWarning">⚠ End time must be after start time</div>
               </div>
             </div>
           </div>
@@ -1441,6 +1902,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
               </div>
               <input type="file" id="photoInput" multiple accept="image/*" style="display:none" onchange="handlePhotoUpload(event)" />
             </div>
+            <div class="field-warning" id="photoWarning">⚠ At least one photo is required</div>
             <div class="photo-preview-grid" id="photoPreviewGrid"></div>
           </div>
 
@@ -1469,6 +1931,14 @@ textarea.form-control { resize: vertical; min-height: 100px; }
               <button class="dist-chip" onclick="setDistance(50, this)">50 mi</button>
             </div>
           </div>
+          <div class="sort-selector">
+            <label>Sort:</label>
+            <select class="filter-select" id="nearbySortSelect" onchange="renderNearbyPage()">
+              <option value="distance">Nearest</option>
+              <option value="date">Starting Soon</option>
+              <option value="newest">Newest Listing</option>
+            </select>
+          </div>
           <div class="view-toggle">
             <button class="view-btn active" id="cardViewBtn" onclick="setView('cards')">🃏 Cards</button>
             <button class="view-btn" id="mapViewBtn" onclick="setView('mapview')">🗺️ Map</button>
@@ -1479,7 +1949,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
         </div>
         <div id="nearbyMapView" class="hidden">
           <div class="map-container-full" id="nearbyMap">
-            <div class="map-mock tall" id="nearbyMapMock">
+            <div class="map-placeholder tall" id="nearbyMapEl">
               <div class="map-overlay">
                 <p>Map view — Google Maps API required</p>
                 <small>Add your API key to enable live maps</small>
@@ -1497,15 +1967,16 @@ textarea.form-control { resize: vertical; min-height: 100px; }
           <h1>Sales Map</h1>
           <p>View all active sales on the map</p>
         </div>
-        <div class="map-filter-bar">
-          <button class="map-filter-btn active" onclick="filterMap(event, '')">All</button>
-          <button class="map-filter-btn" onclick="filterMap(event, 'yard')">🌳 Yard</button>
-          <button class="map-filter-btn" onclick="filterMap(event, 'garage')">🧰 Garage</button>
-          <button class="map-filter-btn" onclick="filterMap(event, 'estate')">🪞 Estate</button>
-        </div>
         <div class="map-layout">
-          <div class="map-main" id="fullMap">
-            <div class="map-mock tall" id="fullMapMock">
+          <div>
+            <div class="map-filter-bar">
+              <button class="map-filter-btn active" onclick="filterMap(event, '')">All</button>
+              <button class="map-filter-btn" onclick="filterMap(event, 'yard')">🌳 Yard</button>
+              <button class="map-filter-btn" onclick="filterMap(event, 'garage')">🧰 Garage</button>
+              <button class="map-filter-btn" onclick="filterMap(event, 'estate')">🪞 Estate</button>
+            </div>
+            <div class="map-main" id="fullMap">
+            <div class="map-placeholder tall" id="fullMapEl">
               <div class="map-overlay">
                 <p>Interactive map coming soon</p>
                 <small><!-- Google Maps API: initialize with initMap() when key is added --></small>
@@ -1513,6 +1984,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
               </div>
               <div id="fullMapPins"></div>
             </div>
+          </div>
           </div>
           <div class="map-sidebar">
             <h3>Listings on Map</h3>
@@ -1551,327 +2023,86 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 // 2. Enable "Maps JavaScript API" and "Places API"
 // 3. Turn on billing (Google gives a large monthly free credit)
 // 4. Paste the key between the quotes below.
-// Leave it empty ('') to keep running in offline / mock mode.
+// Leave it empty ('') to disable maps.
 const GOOGLE_MAPS_API_KEY = 'AIzaSyAA3lpAtSIDbAhgTsOLri2M13mEDT9_-fE';
-// Map center used before we know the user's real location
-// (Austin, TX — matches the sample data). Change to your own city if you like.
+// ============================================================
+// 🌐 API CONFIG — PASTE YOUR BACKEND BASE URL HERE
+// ============================================================
+// Example: 'https://api.yardhop.com'  or  'https://your-project.supabase.co/rest/v1'
+// Leave empty ('') until your backend is ready — the app works offline without it.
+const API_BASE = '';
+// Map center used before we know the user's real location.
 const DEFAULT_CENTER = { lat: 30.2672, lng: -97.7431 };
 // ============================================================
-// MOCK DATA — 12 realistic listings
+// DATA — populated via loadListings() or user submissions
 // ============================================================
-const MOCK_LISTINGS = [
-    {
-        id: '1',
-        title: 'Huge Moving Sale — Everything Must Go!',
-        description: 'Moving cross-country and need to sell almost everything. Furniture, electronics, kitchen appliances, clothing, books, and tons of miscellaneous household items. Priced to sell fast!',
-        category: 'yard',
-        startDate: '2025-07-05',
-        endDate: '2025-07-06',
-        startTime: '08:00',
-        endTime: '15:00',
-        address: '4521 Maple Drive',
-        city: 'Austin',
-        state: 'TX',
-        zip: '78704',
-        lat: 30.2500,
-        lng: -97.7500,
-        photos: [
-            'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80',
-            'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=80',
-            'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600&q=80',
-        ],
-        discount: 50,
-        featured: true,
-        distance: 1.2,
-    },
-    {
-        id: '2',
-        title: 'Spring Garage Cleanout — Tools & Collectibles',
-        description: 'Cleaning out the garage after 20 years! Power tools, hand tools, vintage collectibles, camping gear, sports equipment, and much more. Great deals for the early birds!',
-        category: 'garage',
-        startDate: '2025-07-05',
-        endDate: '2025-07-05',
-        startTime: '07:00',
-        endTime: '13:00',
-        address: '788 Oak Lane',
-        city: 'Austin',
-        state: 'TX',
-        zip: '78701',
-        lat: 30.2672,
-        lng: -97.7431,
-        photos: [
-            'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
-            'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=80',
-        ],
-        discount: 25,
-        featured: true,
-        distance: 2.4,
-    },
-    {
-        id: '3',
-        title: 'Estate Sale — Victorian Home Contents',
-        description: 'Complete contents of a beautifully maintained Victorian home. Antique furniture, fine china, art pieces, vintage jewelry, silverware, and rare collectibles. Professional estate sale managed by certified appraisers.',
-        category: 'estate',
-        startDate: '2025-07-06',
-        endDate: '2025-07-08',
-        startTime: '09:00',
-        endTime: '17:00',
-        address: '123 Heritage Boulevard',
-        city: 'Austin',
-        state: 'TX',
-        zip: '78746',
-        lat: 30.2876,
-        lng: -97.8012,
-        photos: [
-            'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=600&q=80',
-            'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80',
-            'https://images.unsplash.com/photo-1580237541049-2d715a09486e?w=600&q=80',
-            'https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=600&q=80',
-        ],
-        discount: null,
-        featured: true,
-        distance: 3.7,
-    },
-    {
-        id: '4',
-        title: 'Weekend Yard Sale — Kids & Baby Items',
-        description: 'Everything you need for little ones! Baby furniture, strollers, car seats, tons of clothes (newborn to size 8), toys, books, and educational materials. All items are clean and in great condition.',
-        category: 'yard',
-        startDate: '2025-07-12',
-        endDate: '2025-07-13',
-        startTime: '08:30',
-        endTime: '14:00',
-        address: '2209 Elm Street',
-        city: 'Austin',
-        state: 'TX',
-        zip: '78723',
-        lat: 30.2956,
-        lng: -97.7124,
-        photos: [
-            'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=600&q=80',
-            'https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=600&q=80',
-        ],
-        discount: 10,
-        featured: false,
-        distance: 4.1,
-    },
-    {
-        id: '5',
-        title: 'Garage Sale — Vintage Electronics & Records',
-        description: 'Audiophile\'s dream! Vintage turntables, receivers, speakers, cassette decks, and thousands of vinyl records. CDs, DVDs, VHS tapes, and vintage gaming consoles too.',
-        category: 'garage',
-        startDate: '2025-07-19',
-        endDate: '2025-07-20',
-        startTime: '09:00',
-        endTime: '16:00',
-        address: '5563 Cedar Ave',
-        city: 'Austin',
-        state: 'TX',
-        zip: '78758',
-        lat: 30.3532,
-        lng: -97.7231,
-        photos: [
-            'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&q=80',
-            'https://images.unsplash.com/photo-1619983081563-430f63602796?w=600&q=80',
-        ],
-        discount: null,
-        featured: false,
-        distance: 5.8,
-    },
-    {
-        id: '6',
-        title: 'Major Estate Sale — Art & Antiques',
-        description: 'Over 40 years of collecting! Fine art, oil paintings, sculptures, antique clocks, Persian rugs, sterling silver, crystal, and high-end furniture. Three-day event — more items added each day.',
-        category: 'estate',
-        startDate: '2025-07-26',
-        endDate: '2025-07-28',
-        startTime: '08:00',
-        endTime: '18:00',
-        address: '901 Westlake Drive',
-        city: 'Austin',
-        state: 'TX',
-        zip: '78746',
-        lat: 30.3047,
-        lng: -97.8219,
-        photos: [
-            'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&q=80',
-            'https://images.unsplash.com/photo-1580721428028-d1ee3eb3a7a3?w=600&q=80',
-            'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=600&q=80',
-        ],
-        discount: 75,
-        featured: true,
-        distance: 7.2,
-    },
-    {
-        id: '7',
-        title: 'Neighborhood Yard Sale — 15+ Households',
-        description: 'Join us for our annual neighborhood multi-family yard sale! Over 15 homes participating on the same block. Something for everyone — furniture, clothing, appliances, garden tools, and so much more.',
-        category: 'yard',
-        startDate: '2025-08-02',
-        endDate: '2025-08-03',
-        startTime: '07:00',
-        endTime: '14:00',
-        address: '3344 Brentwood Blvd',
-        city: 'Austin',
-        state: 'TX',
-        zip: '78757',
-        lat: 30.3412,
-        lng: -97.7418,
-        photos: [
-            'https://images.unsplash.com/photo-1444653614773-995cb1ef9efa?w=600&q=80',
-        ],
-        discount: null,
-        featured: false,
-        distance: 8.5,
-    },
-    {
-        id: '8',
-        title: 'Garage Sale — Sports & Outdoor Gear',
-        description: 'Downsizing our outdoor collection! Mountain bikes, kayaks, camping equipment, hiking gear, golf clubs, tennis rackets, gym equipment, and weights. All excellent condition.',
-        category: 'garage',
-        startDate: '2025-08-09',
-        endDate: '2025-08-10',
-        startTime: '08:00',
-        endTime: '15:00',
-        address: '672 Lakewood Circle',
-        city: 'Austin',
-        state: 'TX',
-        zip: '78739',
-        lat: 30.1893,
-        lng: -97.8124,
-        photos: [
-            'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=600&q=80',
-            'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=600&q=80',
-        ],
-        discount: 25,
-        featured: false,
-        distance: 9.1,
-    },
-    {
-        id: '9',
-        title: 'Downsizing Sale — Furniture & Home Decor',
-        description: 'Moving from a 5-bedroom to a 2-bedroom condo! Nearly all furniture must go. Sectional sofas, dining sets, bedroom suites, artwork, lamps, rugs, and accent pieces. Quality brands throughout.',
-        category: 'yard',
-        startDate: '2025-08-16',
-        endDate: '2025-08-17',
-        startTime: '09:00',
-        endTime: '15:00',
-        address: '1478 Pinecrest Way',
-        city: 'Austin',
-        state: 'TX',
-        zip: '78745',
-        lat: 30.2198,
-        lng: -97.7834,
-        photos: [
-            'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=80',
-            'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=600&q=80',
-        ],
-        discount: null,
-        featured: false,
-        distance: 10.3,
-    },
-    {
-        id: '10',
-        title: 'Estate Sale — Midcentury Modern Treasure',
-        description: 'Incredible collection of authentic midcentury modern furniture and decor. Eames-era pieces, Knoll furniture, vintage atomic-age decorative items, and rare period lighting. A must-see for design enthusiasts.',
-        category: 'estate',
-        startDate: '2025-08-23',
-        endDate: '2025-08-25',
-        startTime: '10:00',
-        endTime: '17:00',
-        address: '2890 Sunset Ridge Rd',
-        city: 'Austin',
-        state: 'TX',
-        zip: '78731',
-        lat: 30.3654,
-        lng: -97.7623,
-        photos: [
-            'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&q=80',
-            'https://images.unsplash.com/photo-1567016432779-094069958ea5?w=600&q=80',
-            'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80',
-        ],
-        discount: 10,
-        featured: true,
-        distance: 11.9,
-    },
-    {
-        id: '11',
-        title: 'Massive Garage Sale — 3 Families!',
-        description: 'Three families joining together for a super sale! Expect tons of clothing for all sizes and ages, kitchen items, toys, books, bicycles, holiday decorations, and a bit of everything else.',
-        category: 'garage',
-        startDate: '2025-09-06',
-        endDate: '2025-09-07',
-        startTime: '07:30',
-        endTime: '14:30',
-        address: '5112 Rolling Hills Dr',
-        city: 'Austin',
-        state: 'TX',
-        zip: '78727',
-        lat: 30.3789,
-        lng: -97.7054,
-        photos: [
-            'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80',
-        ],
-        discount: null,
-        featured: false,
-        distance: 13.4,
-    },
-    {
-        id: '12',
-        title: 'Estate Clearance — Collector\'s Paradise',
-        description: 'Clearing an estate with decades of varied collecting. Stamp and coin collections, vintage watches, classic car memorabilia, military antiques, baseball cards, old maps, and rare books. Something for every collector.',
-        category: 'estate',
-        startDate: '2025-09-13',
-        endDate: '2025-09-14',
-        startTime: '09:00',
-        endTime: '16:00',
-        address: '344 Ridgewood Court',
-        city: 'Austin',
-        state: 'TX',
-        zip: '78703',
-        lat: 30.2834,
-        lng: -97.7543,
-        photos: [
-            'https://images.unsplash.com/photo-1552346989-e069318e20a5?w=600&q=80',
-            'https://images.unsplash.com/photo-1612528443702-f6741f70a049?w=600&q=80',
-        ],
-        discount: 50,
-        featured: false,
-        distance: 15.1,
-    },
-];
+const listings = [];
 // ============================================================
 // STATE
 // ============================================================
 let favorites = new Set();
 let currentDistance = 10;
 let currentView = 'cards';
-let filteredListings = [...MOCK_LISTINGS];
+let filteredListings = [...listings];
 let selectedDiscount = null;
 let photoFiles = [];
+let coverPhotoIndex = 0;
+let cropState = { x: 50, y: 50, zoom: 100 };
+let pendingCropState = { x: 50, y: 50, zoom: 100 };
+let cropDragActive = false;
+let cropDragStart = { x: 0, y: 0, px: 0, py: 0 };
 let currentDetailId = null;
 let previousPage = 'home'; // page to return to from the detail view
 let userLocation = null;       // { lat, lng } once geolocation succeeds
 let mapsReady = false;         // true once the Google Maps script has loaded
+let homePreviewMap = null;     // the small preview map on the Home page
 let mainMap = null;            // the big Map-page map
 let detailMap = null;          // the small map on a listing's detail page
 let nearbyMap = null;          // the map on the Nearby page (map view)
 let mainMarkers = [];          // markers currently on the main map
 let mainClusterer = null;      // marker clusterer instance
-let userMarker = null;         // "you are here" marker
+let userMarker = null;         // "you are here" marker on main map
+let nearbyUserMarker = null;   // "you are here" marker on nearby map
+let homeUserMarker = null;     // "you are here" marker on home preview map
 let placesAutocomplete = null; // Google Places Autocomplete instance
 let currentMapCategory = '';   // active category filter on the map
+let myListingIds = new Set();
+let endedSaleIds = new Set();
+let editingListingId = null;
+let timePickerState = {
+    start: { hour: 12, min: 0, ampm: 'AM', confirmed: false },
+    end:   { hour: 12, min: 0, ampm: 'AM', confirmed: false }
+};
+// ============================================================
+// ============================================================
+// LIVE DATA
+// ============================================================
+async function loadListings() {
+    if (!API_BASE) return; // backend not configured yet
+    try {
+        const data = await fetch(`${API_BASE}/listings`).then(r => r.json());
+        listings.length = 0;
+        data.forEach(l => listings.push(l));
+        filteredListings = [...listings];
+    } catch (err) {
+        console.error('YardHop: failed to load listings —', err);
+    }
+}
 // ============================================================
 // INIT
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
     loadTheme();
     loadFavorites();
-    renderFeaturedListings();
-    renderNearbyListings();
-    renderMapPins();
-    renderNearbyPage();
-    renderMapSidebar();
+    loadUserData();
+    loadListings().then(() => {
+        updateCategoryCounts();
+        renderFeaturedListings();
+        renderNearbyListings();
+        renderMapPins();
+        renderNearbyPage();
+        renderMapSidebar();
+    });
     updateFavCount();
     // Theme toggle
     const themeToggle = document.getElementById('themeToggle');
@@ -1883,7 +2114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         hamburger.addEventListener('click', toggleMobileMenu);
     // Drop zone
     setupDropZone();
-    // Address autocomplete (mock — upgraded to Google Places if a key is set)
+    // Address autocomplete (Google Places takes over once Maps is ready)
     setupAddressAutocomplete();
     // Load Google Maps (only if a key is configured) and request user location
     loadGoogleMaps();
@@ -1921,6 +2152,8 @@ function showPage(page) {
             b.classList.add('active');
     });
     // Page-specific renders
+    if (page === 'create')
+        resetCreateForm();
     if (page === 'nearby')
         renderNearbyPage();
     if (page === 'favorites')
@@ -1938,14 +2171,131 @@ function showPage(page) {
     closeMobileMenu();
 }
 function toggleMobileMenu() {
-    const navLinks = document.getElementById('navLinks');
-    if (navLinks)
-        navLinks.classList.toggle('open');
+    openMenuDrawer();
 }
 function closeMobileMenu() {
-    const navLinks = document.getElementById('navLinks');
-    if (navLinks)
-        navLinks.classList.remove('open');
+    closeMenuDrawer();
+}
+function openMenuDrawer() {
+    renderMenuDrawer();
+    document.getElementById('menuDrawer').classList.add('open');
+    document.getElementById('menuOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeMenuDrawer() {
+    document.getElementById('menuDrawer').classList.remove('open');
+    document.getElementById('menuOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
+async function togglePushNotifications(enable) {
+    if (!('Notification' in window)) return;
+    if (enable) {
+        const perm = await Notification.requestPermission();
+        if (perm === 'granted') {
+            localStorage.setItem('yardhop-push', 'on');
+            showToast('Push notifications enabled');
+        } else {
+            localStorage.setItem('yardhop-push', 'off');
+            const toggle = document.getElementById('pushToggle');
+            if (toggle) toggle.checked = false;
+            showToast('Permission denied — enable notifications in your browser settings');
+        }
+    } else {
+        localStorage.setItem('yardhop-push', 'off');
+        showToast('Push notifications disabled');
+    }
+}
+function renderMenuDrawer() {
+    const body = document.getElementById('menuDrawerBody');
+    if (!body) return;
+    // Nav links (for mobile where bottom nav may not cover all pages)
+    const navHtml = `
+      <div class="drawer-nav-links">
+        <button class="drawer-nav-link" onclick="closeMenuDrawer();showPage('home')">🏠 Home</button>
+        <button class="drawer-nav-link" onclick="closeMenuDrawer();showPage('nearby')">🔍 Nearby</button>
+        <button class="drawer-nav-link" onclick="closeMenuDrawer();showPage('map')">🗺️ Map</button>
+        <button class="drawer-nav-link" onclick="closeMenuDrawer();showPage('favorites')">❤️ Favorites</button>
+      </div>`;
+    const coverThumb = l => {
+        if (!l.photos.length) return categoryEmoji(l.category);
+        const idx = Math.min(l.coverIndex || 0, l.photos.length - 1);
+        const ox = l.cropX !== undefined ? l.cropX : 50;
+        const oy = l.cropY !== undefined ? l.cropY : 50;
+        const scale = l.cropZoom !== undefined ? l.cropZoom / 100 : 1;
+        return `<img src="${l.photos[idx]}" alt="${l.title}" style="object-position:${ox}% ${oy}%;transform:scale(${scale});transform-origin:${ox}% ${oy}%" />`;
+    };
+    // My Listings
+    const myListings = listings.filter(l => l.id.startsWith('user-'));
+    const myHtml = myListings.length === 0
+        ? '<p class="drawer-empty">No listings yet.</p>'
+        : myListings.map(l => `
+            <div class="drawer-listing-item" id="drawer-item-${l.id}">
+              <div class="drawer-listing-thumb" onclick="closeMenuDrawer();showDetail('${l.id}')">${coverThumb(l)}</div>
+              <div class="drawer-listing-info" onclick="closeMenuDrawer();showDetail('${l.id}')">
+                <div class="drawer-listing-title">${l.title}</div>
+                <div class="drawer-listing-meta">${formatDate(l.startDate)}${l.city ? ' · ' + l.city : ''}</div>
+              </div>
+              <button type="button" class="drawer-delete-btn" onclick="drawerDeleteConfirm('${l.id}')" title="Delete">🗑</button>
+            </div>`).join('');
+    // Favorited
+    const favListings = listings.filter(l => favorites.has(l.id));
+    const favHtml = favListings.length === 0
+        ? '<p class="drawer-empty">Tap ♥ on any listing to save it.</p>'
+        : favListings.map(l => `
+            <div class="drawer-listing-item">
+              <div class="drawer-listing-thumb" onclick="closeMenuDrawer();showDetail('${l.id}')">${coverThumb(l)}</div>
+              <div class="drawer-listing-info" onclick="closeMenuDrawer();showDetail('${l.id}')">
+                <div class="drawer-listing-title">${l.title}</div>
+                <div class="drawer-listing-meta">${formatDate(l.startDate)}${l.city ? ' · ' + l.city : ''}</div>
+              </div>
+              <button type="button" class="drawer-unfav-btn" onclick="drawerUnfavorite(event,'${l.id}')" title="Unfavorite">❤️</button>
+            </div>`).join('');
+    const pushSupported = 'Notification' in window;
+    const pushOn = pushSupported && localStorage.getItem('yardhop-push') === 'on' && Notification.permission === 'granted';
+    const settingsHtml = pushSupported ? `
+      <div class="drawer-section">
+        <div class="drawer-section-title">Settings</div>
+        <div class="drawer-toggle-row">
+          <div>
+            <div class="drawer-toggle-label">Push Notifications</div>
+            <div class="drawer-toggle-sub">Get alerts for new sales near you</div>
+          </div>
+          <label class="toggle-label" style="margin:0">
+            <input type="checkbox" id="pushToggle" ${pushOn ? 'checked' : ''} onchange="togglePushNotifications(this.checked)" />
+            <span class="toggle-switch"></span>
+          </label>
+        </div>
+      </div>` : '';
+    body.innerHTML = `
+      ${navHtml}
+      ${settingsHtml}
+      <div class="drawer-section">
+        <div class="drawer-section-title">My Listings</div>
+        ${myHtml}
+        <button class="btn btn-primary" style="width:100%;margin-top:.75rem;font-size:.85rem" onclick="closeMenuDrawer();showPage('create')">+ Create New Listing</button>
+      </div>
+      <div class="drawer-section">
+        <div class="drawer-section-title">My Favorites</div>
+        ${favHtml}
+      </div>`;
+}
+function deleteListing(id) {
+    if (!confirm('Delete this listing? This cannot be undone.')) return;
+    const idx = listings.findIndex(l => l.id === id);
+    if (idx !== -1) listings.splice(idx, 1);
+    filteredListings = filteredListings.filter(l => l.id !== id);
+    myListingIds.delete(id);
+    endedSaleIds.delete(id);
+    saveUserData();
+    updateCategoryCounts();
+    renderFeaturedListings();
+    renderNearbyListings();
+    renderMapPins();
+    renderMapSidebar();
+    refreshMainMarkers();
+    renderMenuDrawer();
+    showToast('🗑️ Listing deleted');
+    showPage('nearby');
 }
 // ============================================================
 // RENDER LISTING CARD
@@ -1980,9 +2330,19 @@ function formatTime(timeStr) {
 }
 function renderCard(listing, stagger = 0) {
     const isFav = favorites.has(listing.id);
-    const imgHtml = listing.photos.length > 0
-        ? `<img src="${listing.photos[0]}" alt="${listing.title}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'card-img-placeholder\\'>${categoryEmoji(listing.category)}</div>'" />`
-        : `<div class="card-img-placeholder">${categoryEmoji(listing.category)}</div>`;
+    const isEnded = endedSaleIds.has(listing.id);
+    let imgHtml;
+    if (listing.photos.length > 0) {
+        const idx = listing.coverIndex || 0;
+        const src = listing.photos[Math.min(idx, listing.photos.length - 1)];
+        const ox = listing.cropX !== undefined ? listing.cropX : 50;
+        const oy = listing.cropY !== undefined ? listing.cropY : 50;
+        const scale = listing.cropZoom !== undefined ? listing.cropZoom / 100 : 1;
+        const imgStyle = `object-position:${ox}% ${oy}%;transform:scale(${scale});transform-origin:${ox}% ${oy}%`;
+        imgHtml = `<img src="${src}" alt="${listing.title}" loading="lazy" style="${imgStyle}" onerror="this.parentElement.innerHTML='<div class=\\'card-img-placeholder\\'>${categoryEmoji(listing.category)}</div>'" />`;
+    } else {
+        imgHtml = `<div class="card-img-placeholder">${categoryEmoji(listing.category)}</div>`;
+    }
     const discountBadge = listing.discount
         ? `<span class="badge badge-discount"> ${listing.discount}% OFF</span>`
         : '';
@@ -1990,7 +2350,7 @@ function renderCard(listing, stagger = 0) {
         ? formatDate(listing.startDate)
         : `${formatDate(listing.startDate)} – ${formatDate(listing.endDate)}`;
     return `
-    <div class="listing-card" style="animation-delay:${stagger * 0.06}s" onclick="showDetail('${listing.id}')">
+    <div class="listing-card${isEnded ? ' ended' : ''}" style="animation-delay:${stagger * 0.06}s" onclick="showDetail('${listing.id}')">
       <div class="card-img">
         ${imgHtml}
         <div class="card-badge-wrap">
@@ -1998,14 +2358,14 @@ function renderCard(listing, stagger = 0) {
           ${discountBadge}
         </div>
         <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event,'${listing.id}')" aria-label="Save listing">
-          ♥
+          ${isFav ? '♥' : '♡'}
         </button>
       </div>
       <div class="card-body">
         <div class="card-title">${listing.title}</div>
         <div class="card-meta">
           <span>📅 ${dateRange}</span>
-          <span>🕐 ${formatTime(listing.startTime)}</span>
+          <span>🕐 ${formatTime(listing.startTime)} – ${formatTime(listing.endTime)}</span>
         </div>
         <div class="card-address">📍 ${listing.address}, ${listing.city}, ${listing.state} ${listing.zip}</div>
         <div class="card-footer">
@@ -2019,25 +2379,35 @@ function renderCard(listing, stagger = 0) {
 // ============================================================
 // HOME PAGE RENDERS
 // ============================================================
+function updateCategoryCounts() {
+    const counts = { yard: 0, garage: 0, estate: 0 };
+    listings.forEach(l => { if (counts[l.category] !== undefined) counts[l.category]++; });
+    const set = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n + ' active'; };
+    set('countYard', counts.yard);
+    set('countGarage', counts.garage);
+    set('countEstate', counts.estate);
+}
 function renderFeaturedListings() {
     const el = document.getElementById('featuredListings');
-    if (!el)
-        return;
-    const featured = MOCK_LISTINGS.filter(l => l.featured).slice(0, 4);
-    el.innerHTML = featured.map((l, i) => renderCard(l, i)).join('');
+    if (!el) return;
+    const featured = listings.filter(l => l.featured).slice(0, 4);
+    el.innerHTML = featured.length > 0
+        ? featured.map((l, i) => renderCard(l, i)).join('')
+        : '<p style="color:var(--text-3);padding:1rem 0;">No listings yet — be the first to <a href="#" onclick="showPage(\'create\')" style="color:var(--blue);font-weight:600">create one</a>!</p>';
 }
 function renderNearbyListings() {
     const el = document.getElementById('nearbyListings');
-    if (!el)
-        return;
-    const sorted = [...MOCK_LISTINGS].sort((a, b) => (a.distance || 99) - (b.distance || 99)).slice(0, 4);
-    el.innerHTML = sorted.map((l, i) => renderCard(l, i)).join('');
+    if (!el) return;
+    const sorted = [...listings].sort((a, b) => (a.distance || 99) - (b.distance || 99)).slice(0, 4);
+    el.innerHTML = sorted.length > 0
+        ? sorted.map((l, i) => renderCard(l, i)).join('')
+        : '<p style="color:var(--text-3);padding:1rem 0;">No nearby listings yet.</p>';
 }
 // ============================================================
-// MAP PINS (mock visualization)
+// MAP PINS
 // ============================================================
 function renderMapPins() {
-    const container = document.getElementById('mapMockPins');
+    const container = document.getElementById('mapPins');
     if (!container)
         return;
     const positions = [
@@ -2056,7 +2426,7 @@ function renderMapPins() {
     // Full map pins
     const fullPins = document.getElementById('fullMapPins');
     if (fullPins) {
-        fullPins.innerHTML = MOCK_LISTINGS.map(l => {
+        fullPins.innerHTML = listings.map(l => {
             const left = 15 + Math.abs(l.lng + 97.8) * 300 % 70;
             const top = 10 + Math.abs(l.lat - 30.1) * 200 % 75;
             return `<div class="map-pin pin-${l.category}" style="left:${left}%;top:${top}%" title="${l.title}" onclick="showDetail('${l.id}')">
@@ -2072,9 +2442,15 @@ function renderNearbyPage() {
     const el = document.getElementById('nearbyPageListings');
     if (!el)
         return;
-    const nearby = MOCK_LISTINGS
+    const sortEl = document.getElementById('nearbySortSelect');
+    const sort = sortEl ? sortEl.value : 'distance';
+    const nearby = listings
         .filter(l => (l.distance || 0) <= currentDistance)
-        .sort((a, b) => (a.distance || 99) - (b.distance || 99));
+        .sort((a, b) => {
+            if (sort === 'date') return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+            if (sort === 'newest') return listings.indexOf(b) - listings.indexOf(a);
+            return (a.distance || 99) - (b.distance || 99);
+        });
     el.innerHTML = nearby.length > 0
         ? nearby.map((l, i) => renderCard(l, i)).join('')
         : '<p style="color:var(--text-3);padding:2rem 0;">No sales found within this distance.</p>';
@@ -2112,7 +2488,7 @@ function renderMapSidebar() {
     const el = document.getElementById('mapSidebarListings');
     if (!el)
         return;
-    el.innerHTML = MOCK_LISTINGS.map(l => {
+    el.innerHTML = listings.map(l => {
         const img = l.photos.length > 0
             ? `<img src="${l.photos[0]}" alt="${l.title}" loading="lazy" onerror="this.style.display='none'" />`
             : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.5rem">${categoryEmoji(l.category)}</div>`;
@@ -2132,14 +2508,13 @@ function filterMap(event, cat) {
     if (event && event.target)
         event.target.classList.add('active');
     currentMapCategory = cat;
-    refreshMainMarkers(); // updates the live map (no-op in mock mode)
-    // In a real implementation, this would filter markers on the map.
-    // For now it filters the sidebar.
+    refreshMainMarkers();
+    // Also filters the sidebar cards.
     const el = document.getElementById('mapSidebarListings');
     if (!el)
         return;
-    const listings = cat ? MOCK_LISTINGS.filter(l => l.category === cat) : MOCK_LISTINGS;
-    el.innerHTML = listings.map(l => {
+    const sidebarList = cat ? listings.filter(l => l.category === cat) : listings;
+    el.innerHTML = sidebarList.map(l => {
         const img = l.photos.length > 0
             ? `<img src="${l.photos[0]}" alt="${l.title}" loading="lazy" />`
             : `<div style="text-align:center;font-size:1.5rem">${categoryEmoji(l.category)}</div>`;
@@ -2158,7 +2533,7 @@ function filterMap(event, cat) {
 // LISTING DETAIL
 // ============================================================
 function showDetail(id) {
-    const listing = MOCK_LISTINGS.find(l => l.id === id);
+    const listing = listings.find(l => l.id === id);
     if (!listing)
         return;
     // Remember which page we came from so "Back" returns there
@@ -2235,8 +2610,21 @@ function showDetail(id) {
           </button>
           <button class="btn btn-ghost" onclick="shareListing('${listing.title}')">↗️ Share</button>
         </div>
+        ${listing.sellerName ? `
+        <div class="seller-info">
+          <div class="seller-info-title">Seller Information</div>
+          <div class="seller-row"><span>👤</span><span>${listing.sellerName}</span></div>
+          <div class="seller-row"><span>📞</span><span>${listing.sellerContact || 'Contact not provided'}</span></div>
+        </div>` : ''}
+        ${listing.id.startsWith('user-') ? `
+        <div class="detail-manage-bar">
+          <span class="manage-label">⚙️ Your Listing</span>
+          <button class="btn btn-ghost" onclick="editListing('${listing.id}')">✏️ Edit</button>
+          <button class="btn btn-ghost" onclick="endSale('${listing.id}')">${endedSaleIds.has(listing.id) ? '✅ Reopen Sale' : '🚫 End Sale'}</button>
+          <button class="btn btn-ghost" onclick="showDeleteConfirm('${listing.id}')">🗑️ Delete</button>
+        </div>` : ''}
         <div class="detail-map">
-          <div class="map-mock" id="detailMiniMap" style="height:200px;border-radius:var(--radius-lg)">
+          <div class="map-placeholder" id="detailMiniMap" style="height:200px;border-radius:var(--radius-lg)">
             <div class="map-overlay">
               <small>📍 ${listing.address}, ${listing.city}</small>
             </div>
@@ -2312,7 +2700,7 @@ function toggleFavorite(event, id) {
         if (onclick.includes(`'${id}'`)) {
             const btn = card.querySelector('.fav-btn');
             if (btn) {
-                btn.textContent = '♥';
+                btn.textContent = favorites.has(id) ? '♥' : '♡';
                 btn.classList.toggle('active', favorites.has(id));
             }
         }
@@ -2339,7 +2727,7 @@ function renderFavoritesPage() {
     const el = document.getElementById('favoritesContent');
     if (!el)
         return;
-    const favListings = MOCK_LISTINGS.filter(l => favorites.has(l.id));
+    const favListings = listings.filter(l => favorites.has(l.id));
     if (favListings.length === 0) {
         el.innerHTML = `
       <div class="favorites-empty">
@@ -2370,7 +2758,7 @@ function applySearch() {
     saturday.setDate(today.getDate() + daysToSat);
     const sunday = new Date(saturday);
     sunday.setDate(saturday.getDate() + 1);
-    filteredListings = MOCK_LISTINGS.filter(l => {
+    filteredListings = listings.filter(l => {
         if (query && !l.title.toLowerCase().includes(query) && !l.city.toLowerCase().includes(query) && !l.zip.includes(query))
             return false;
         if (cat && l.category !== cat)
@@ -2405,6 +2793,198 @@ function filterByCategory(cat) {
 // ============================================================
 // CREATE LISTING
 // ============================================================
+// ---- CUSTOM TIME PICKER ----
+function _buildPickerSelects(which) {
+    const hourSel = document.getElementById(which + 'TimeHour');
+    const minSel  = document.getElementById(which + 'TimeMin');
+    if (!hourSel || !minSel) return;
+    hourSel.innerHTML = '';
+    for (let h = 1; h <= 12; h++) {
+        const o = document.createElement('option');
+        o.value = h; o.textContent = String(h).padStart(2, '0');
+        hourSel.appendChild(o);
+    }
+    minSel.innerHTML = '';
+    for (let m = 0; m < 60; m += 5) {
+        const o = document.createElement('option');
+        o.value = m; o.textContent = String(m).padStart(2, '0');
+        minSel.appendChild(o);
+    }
+}
+function openTimePicker(which) {
+    // Close the other picker if open
+    const other = which === 'start' ? 'end' : 'start';
+    document.getElementById(other + 'TimePanel').classList.remove('open');
+    document.getElementById(other + 'TimeDisplay').classList.remove('open');
+
+    const panel   = document.getElementById(which + 'TimePanel');
+    const display = document.getElementById(which + 'TimeDisplay');
+    const isOpen  = panel.classList.contains('open');
+    if (isOpen) { panel.classList.remove('open'); display.classList.remove('open'); return; }
+
+    _buildPickerSelects(which);
+    const st = timePickerState[which];
+    const hourSel = document.getElementById(which + 'TimeHour');
+    const minSel  = document.getElementById(which + 'TimeMin');
+    hourSel.value = st.hour;
+    // snap minute to nearest 5
+    minSel.value = Math.round(st.min / 5) * 5 % 60;
+    document.getElementById(which + 'TimeAM').classList.toggle('active', st.ampm === 'AM');
+    document.getElementById(which + 'TimePM').classList.toggle('active', st.ampm === 'PM');
+
+    panel.classList.add('open');
+    display.classList.add('open');
+}
+function setPickerAmPm(which, ampm) {
+    timePickerState[which].ampm = ampm;
+    document.getElementById(which + 'TimeAM').classList.toggle('active', ampm === 'AM');
+    document.getElementById(which + 'TimePM').classList.toggle('active', ampm === 'PM');
+}
+function confirmTimePicker(which) {
+    const hourSel = document.getElementById(which + 'TimeHour');
+    const minSel  = document.getElementById(which + 'TimeMin');
+    const st = timePickerState[which];
+    st.hour = parseInt(hourSel.value);
+    st.min  = parseInt(minSel.value);
+    st.confirmed = true;
+
+    // Convert to 24h for hidden input
+    let h24 = st.hour % 12;
+    if (st.ampm === 'PM') h24 += 12;
+    const timeVal = String(h24).padStart(2, '0') + ':' + String(st.min).padStart(2, '0');
+    document.getElementById(which + 'TimeInput').value = timeVal;
+
+    // Update display label
+    const displayLabel = st.hour + ':' + String(st.min).padStart(2, '0') + ' ' + st.ampm;
+    const valEl = document.getElementById(which + 'TimeVal');
+    valEl.textContent = displayLabel;
+    valEl.classList.remove('time-picker-placeholder');
+
+    // Close panel
+    document.getElementById(which + 'TimePanel').classList.remove('open');
+    document.getElementById(which + 'TimeDisplay').classList.remove('open');
+
+    if (which === 'start') { validateStartTime(); validateEndTime(); }
+    else { validateEndTime(); }
+}
+function cancelTimePicker(which) {
+    document.getElementById(which + 'TimePanel').classList.remove('open');
+    document.getElementById(which + 'TimeDisplay').classList.remove('open');
+}
+// Close pickers when clicking outside
+document.addEventListener('click', function(e) {
+    ['start', 'end'].forEach(which => {
+        const wrap = document.getElementById(which + 'TimeWrap');
+        if (wrap && !wrap.contains(e.target)) {
+            document.getElementById(which + 'TimePanel').classList.remove('open');
+            document.getElementById(which + 'TimeDisplay').classList.remove('open');
+        }
+    });
+});
+function validateStartDate() {
+    const el = document.getElementById('startDateInput');
+    const warn = document.getElementById('startDateWarning');
+    if (!el || !warn) return true;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selected = el.value ? new Date(el.value + 'T00:00:00') : null;
+    const invalid = selected && selected < today;
+    warn.classList.toggle('visible', !!invalid);
+    el.setCustomValidity(invalid ? 'Start date cannot be in the past' : '');
+    return !invalid;
+}
+function validateStartTime() {
+    const dateEl = document.getElementById('startDateInput');
+    const timeEl = document.getElementById('startTimeInput');
+    const warn = document.getElementById('startTimeWarning');
+    if (!dateEl || !timeEl || !warn) return true;
+    const now = new Date();
+    const todayStr = now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0');
+    const isToday = dateEl.value === todayStr;
+    const nowTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    const invalid = isToday && !!timeEl.value && timeEl.value < nowTime;
+    warn.classList.toggle('visible', !!invalid);
+    timeEl.setCustomValidity(invalid ? 'Start time cannot be in the past' : '');
+    return !invalid;
+}
+function validateEndDate() {
+    const start = document.getElementById('startDateInput');
+    const end = document.getElementById('endDateInput');
+    const warn = document.getElementById('endDateWarning');
+    if (!start || !end || !warn) return true;
+    const invalid = start.value && end.value && end.value < start.value;
+    warn.classList.toggle('visible', !!invalid);
+    if (invalid) end.setCustomValidity('End date cannot be before start date');
+    else end.setCustomValidity('');
+    return !invalid;
+}
+function validateEndTime() {
+    const startDate = document.getElementById('startDateInput');
+    const endDate = document.getElementById('endDateInput');
+    const startTime = document.getElementById('startTimeInput');
+    const endTime = document.getElementById('endTimeInput');
+    const warn = document.getElementById('endTimeWarning');
+    if (!startTime || !endTime || !warn) return true;
+    // Skip if any field is missing — can't compare incomplete datetimes
+    if (!startDate.value || !endDate.value || !startTime.value || !endTime.value) {
+        warn.classList.remove('visible');
+        endTime.setCustomValidity('');
+        return true;
+    }
+    const startDT = new Date(startDate.value + 'T' + startTime.value);
+    const endDT   = new Date(endDate.value   + 'T' + endTime.value);
+    const invalid = endDT <= startDT;
+    warn.classList.toggle('visible', invalid);
+    if (invalid) endTime.setCustomValidity('End must be after start');
+    else endTime.setCustomValidity('');
+    return !invalid;
+}
+function resetCreateForm() {
+    editingListingId = null;
+    const btn = document.querySelector('#createForm button[type="submit"]');
+    if (btn) btn.textContent = 'Publish Listing';
+    const form = document.getElementById('createForm');
+    if (form) form.reset();
+    // Explicitly clear readonly address fields (form.reset relies on defaultValue)
+    ['cityInput', 'stateInput', 'zipInput', 'latInput', 'lngInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    // Clear any lingering custom validity so second submission is never blocked
+    ['startDateInput', 'startTimeInput', 'endDateInput', 'endTimeInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.setCustomValidity('');
+    });
+    ['startDateWarning', 'startTimeWarning', 'endDateWarning', 'endTimeWarning', 'photoWarning'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('visible');
+    });
+    // Discount UI
+    const discountFields = document.getElementById('discountFields');
+    if (discountFields) discountFields.classList.add('hidden');
+    document.querySelectorAll('.discount-chip').forEach(c => c.classList.remove('selected'));
+    // Photo / crop state
+    photoFiles = [];
+    coverPhotoIndex = 0;
+    cropState = { x: 50, y: 50, zoom: 100 };
+    selectedDiscount = null;
+    // Reset time picker state and display
+    timePickerState = {
+        start: { hour: 12, min: 0, ampm: 'AM', confirmed: false },
+        end:   { hour: 12, min: 0, ampm: 'AM', confirmed: false }
+    };
+    ['start', 'end'].forEach(which => {
+        const valEl = document.getElementById(which + 'TimeVal');
+        if (valEl) { valEl.textContent = 'Select time…'; valEl.classList.add('time-picker-placeholder'); }
+        const panel = document.getElementById(which + 'TimePanel');
+        const display = document.getElementById(which + 'TimeDisplay');
+        if (panel) panel.classList.remove('open');
+        if (display) display.classList.remove('open', 'invalid');
+    });
+    renderPhotoPreview();
+}
 function toggleDiscount() {
     const toggle = document.getElementById('discountToggle');
     const fields = document.getElementById('discountFields');
@@ -2420,8 +3000,78 @@ function selectDiscount(event, pct) {
 }
 function submitListing(event) {
     event.preventDefault();
-    // Backend integration point: gather form values + photoFiles + lat/lng
-    // and POST to your API here.
+    const get = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    if (!get('startTimeInput')) { showToast('Please select a start time'); return; }
+    if (!get('endTimeInput'))   { showToast('Please select an end time');   return; }
+    const photoWarn = document.getElementById('photoWarning');
+    if (photoFiles.length === 0) {
+        if (photoWarn) photoWarn.classList.add('visible');
+        document.getElementById('dropZone')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+    if (photoWarn) photoWarn.classList.remove('visible');
+    if (!validateStartDate() || !validateStartTime() || !validateEndDate() || !validateEndTime()) return;
+    // Duplicate address + same category check
+    const newAddr = (get('addressInput') + ' ' + get('cityInput') + ' ' + get('stateInput')).toLowerCase().replace(/\s+/g, ' ').trim();
+    const newCat  = get('categoryInput');
+    const duplicate = listings.find(l => {
+        const addr = (l.address + ' ' + l.city + ' ' + l.state).toLowerCase().replace(/\s+/g, ' ').trim();
+        return addr === newAddr && l.category === newCat;
+    });
+    if (duplicate) {
+        showToast('A ' + newCat + ' sale already exists at this address. Use a different category or address.');
+        return;
+    }
+    const lat = parseFloat(get('latInput')) || DEFAULT_CENTER.lat;
+    const lng = parseFloat(get('lngInput')) || DEFAULT_CENTER.lng;
+    const discountPct = selectedDiscount || (get('discountValue') ? parseInt(get('discountValue')) : null);
+    const dist = userLocation
+        ? Math.round(distanceMiles(userLocation.lat, userLocation.lng, lat, lng) * 10) / 10
+        : null;
+    const newId = editingListingId || ('user-' + Date.now());
+    const newListing = {
+        id: newId,
+        title: get('titleInput'),
+        description: get('descriptionInput'),
+        sellerName: get('sellerNameInput'),
+        sellerContact: get('sellerContactInput'),
+        category: get('categoryInput'),
+        startDate: get('startDateInput'),
+        endDate: get('endDateInput'),
+        startTime: get('startTimeInput'),
+        endTime: get('endTimeInput'),
+        address: get('addressInput'),
+        city: get('cityInput'),
+        state: get('stateInput'),
+        zip: get('zipInput'),
+        lat,
+        lng,
+        photos: [...photoFiles],
+        coverIndex: coverPhotoIndex,
+        cropX: cropState.x,
+        cropY: cropState.y,
+        cropZoom: cropState.zoom,
+        discount: discountPct,
+        featured: true,
+        distance: dist,
+    };
+    if (editingListingId) {
+        const idx = listings.findIndex(l => l.id === editingListingId);
+        if (idx >= 0) listings[idx] = newListing;
+        editingListingId = null;
+    } else {
+        listings.unshift(newListing);
+        myListingIds.add(newId);
+    }
+    filteredListings = [...listings];
+    saveUserData();
+    resetCreateForm();
+    updateCategoryCounts();
+    renderFeaturedListings();
+    renderNearbyListings();
+    renderMapPins();
+    renderMapSidebar();
+    refreshMainMarkers();
     showToast('🚀 Listing published successfully!');
     setTimeout(() => showPage('home'), 1500);
 }
@@ -2436,6 +3086,8 @@ function handlePhotoUpload(event) {
         reader.onload = (e) => {
             var _a;
             photoFiles.push((_a = e.target) === null || _a === void 0 ? void 0 : _a.result);
+            const pw = document.getElementById('photoWarning');
+            if (pw) pw.classList.remove('visible');
             renderPhotoPreview();
         };
         reader.readAsDataURL(file);
@@ -2443,25 +3095,132 @@ function handlePhotoUpload(event) {
 }
 function renderPhotoPreview() {
     const grid = document.getElementById('photoPreviewGrid');
-    if (!grid)
-        return;
-    grid.innerHTML = photoFiles.map((src, i) => `
-    <div class="photo-preview-item">
-      <img src="${src}" alt="Photo ${i + 1}" />
-      <button class="photo-remove" onclick="removePhoto(${i})">✕</button>
-    </div>
-  `).join('');
+    if (!grid) return;
+    if (coverPhotoIndex >= photoFiles.length) coverPhotoIndex = 0;
+    grid.innerHTML = photoFiles.map((src, i) => {
+        const isCover = i === coverPhotoIndex;
+        return `
+        <div class="photo-preview-item${isCover ? ' is-cover' : ''}">
+          <img src="${src}" alt="Photo ${i + 1}" />
+          ${isCover
+            ? `<span class="photo-cover-badge">Cover</span>
+               <button type="button" class="photo-adjust-btn" onclick="openCropModal(${i})">✎ Adjust</button>`
+            : `<button type="button" class="photo-set-cover-btn" onclick="setCoverPhoto(${i})">Set as Cover</button>`}
+          <button type="button" class="photo-remove" onclick="removePhoto(${i})">✕</button>
+        </div>`;
+    }).join('');
+}
+function setCoverPhoto(index) {
+    coverPhotoIndex = index;
+    cropState = { x: 50, y: 50, zoom: 100 };
+    renderPhotoPreview();
 }
 function removePhoto(index) {
     photoFiles.splice(index, 1);
+    if (coverPhotoIndex >= photoFiles.length) coverPhotoIndex = Math.max(0, photoFiles.length - 1);
+    else if (index < coverPhotoIndex) coverPhotoIndex--;
     renderPhotoPreview();
+}
+// ---- Crop modal ----
+function openCropModal(index) {
+    coverPhotoIndex = index;
+    pendingCropState = { ...cropState };
+    const img = document.getElementById('cropPreviewImg');
+    if (img) img.src = photoFiles[index];
+    const slider = document.getElementById('cropZoomSlider');
+    if (slider) slider.value = pendingCropState.zoom;
+    document.getElementById('cropZoomVal').textContent = (pendingCropState.zoom / 100).toFixed(1) + '×';
+    applyCropPreview();
+    document.getElementById('cropModalOverlay').classList.add('open');
+    setupCropDrag();
+}
+function applyCropPreview() {
+    const img = document.getElementById('cropPreviewImg');
+    if (!img) return;
+    img.style.objectPosition = `${pendingCropState.x}% ${pendingCropState.y}%`;
+    img.style.transform = `scale(${pendingCropState.zoom / 100})`;
+    img.style.transformOrigin = `${pendingCropState.x}% ${pendingCropState.y}%`;
+}
+function onCropZoom(val) {
+    pendingCropState.zoom = parseInt(val);
+    document.getElementById('cropZoomVal').textContent = (val / 100).toFixed(1) + '×';
+    applyCropPreview();
+}
+function saveCrop() {
+    cropState = { ...pendingCropState };
+    document.getElementById('cropModalOverlay').classList.remove('open');
+    teardownCropDrag();
+    renderPhotoPreview();
+}
+function cancelCrop() {
+    document.getElementById('cropModalOverlay').classList.remove('open');
+    teardownCropDrag();
+}
+function setupCropDrag() {
+    const wrap = document.getElementById('cropFrameWrap');
+    if (!wrap) return;
+    wrap.addEventListener('mousedown', onCropDragStart);
+    wrap.addEventListener('touchstart', onCropTouchStart, { passive: false });
+}
+function teardownCropDrag() {
+    const wrap = document.getElementById('cropFrameWrap');
+    if (wrap) {
+        wrap.removeEventListener('mousedown', onCropDragStart);
+        wrap.removeEventListener('touchstart', onCropTouchStart);
+    }
+    document.removeEventListener('mousemove', onCropDragMove);
+    document.removeEventListener('mouseup', onCropDragEnd);
+    document.removeEventListener('touchmove', onCropTouchMove);
+    document.removeEventListener('touchend', onCropDragEnd);
+}
+function onCropDragStart(e) {
+    cropDragActive = true;
+    cropDragStart = { x: e.clientX, y: e.clientY, px: pendingCropState.x, py: pendingCropState.y };
+    document.addEventListener('mousemove', onCropDragMove);
+    document.addEventListener('mouseup', onCropDragEnd);
+}
+function onCropTouchStart(e) {
+    e.preventDefault();
+    const t = e.touches[0];
+    cropDragActive = true;
+    cropDragStart = { x: t.clientX, y: t.clientY, px: pendingCropState.x, py: pendingCropState.y };
+    document.addEventListener('touchmove', onCropTouchMove, { passive: false });
+    document.addEventListener('touchend', onCropDragEnd);
+}
+function onCropDragMove(e) {
+    if (!cropDragActive) return;
+    const wrap = document.getElementById('cropFrameWrap');
+    if (!wrap) return;
+    const rect = wrap.getBoundingClientRect();
+    const dx = e.clientX - cropDragStart.x;
+    const dy = e.clientY - cropDragStart.y;
+    // dragging right reveals left side of image → decrease x
+    pendingCropState.x = Math.max(0, Math.min(100, cropDragStart.px - (dx / rect.width) * 100));
+    pendingCropState.y = Math.max(0, Math.min(100, cropDragStart.py - (dy / rect.height) * 100));
+    applyCropPreview();
+}
+function onCropTouchMove(e) {
+    e.preventDefault();
+    const t = e.touches[0];
+    onCropDragMove({ clientX: t.clientX, clientY: t.clientY });
+}
+function onCropDragEnd() {
+    cropDragActive = false;
+    document.removeEventListener('mousemove', onCropDragMove);
+    document.removeEventListener('mouseup', onCropDragEnd);
+    document.removeEventListener('touchmove', onCropTouchMove);
+    document.removeEventListener('touchend', onCropDragEnd);
 }
 // ---- Drop zone ----
 function setupDropZone() {
     const zone = document.getElementById('dropZone');
     if (!zone)
         return;
-    zone.addEventListener('click', () => { var _a; return (_a = document.getElementById('photoInput')) === null || _a === void 0 ? void 0 : _a.click(); });
+    zone.addEventListener('click', (e) => {
+        if (e.target.closest('label')) return; // label's for= already opens the picker
+        const inp = document.getElementById('photoInput');
+        if (inp) inp.click();
+    });
     zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
     zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
     zone.addEventListener('drop', (e) => {
@@ -2483,61 +3242,11 @@ function setupDropZone() {
     });
 }
 // ============================================================
-// ADDRESS AUTOCOMPLETE (Mock — replace with Google Places API)
+// ADDRESS AUTOCOMPLETE — powered by Google Places (see attachPlacesAutocomplete)
 // ============================================================
-const MOCK_ADDRESSES = [
-    { address: '100 Congress Ave', city: 'Austin', state: 'TX', zip: '78701', lat: 30.2672, lng: -97.7431 },
-    { address: '500 W 2nd St', city: 'Austin', state: 'TX', zip: '78701', lat: 30.2687, lng: -97.7452 },
-    { address: '1000 Barton Springs Rd', city: 'Austin', state: 'TX', zip: '78704', lat: 30.2623, lng: -97.7636 },
-    { address: '3800 N Lamar Blvd', city: 'Austin', state: 'TX', zip: '78756', lat: 30.3123, lng: -97.7431 },
-    { address: '2901 S Lamar Blvd', city: 'Austin', state: 'TX', zip: '78704', lat: 30.2456, lng: -97.7782 },
-];
 function setupAddressAutocomplete() {
-    const input = document.getElementById('addressInput');
-    const dropdown = document.getElementById('autocompleteDropdown');
-    if (!input || !dropdown)
-        return;
-    // Google Places API integration point:
-    // new google.maps.places.Autocomplete(input, { types: ['address'], componentRestrictions: { country: 'us' } });
-    input.addEventListener('input', () => {
-        if (placesAutocomplete) return; // Google Places is handling this field
-        const val = input.value.toLowerCase();
-        if (val.length < 2) {
-            dropdown.style.display = 'none';
-            return;
-        }
-        const matches = MOCK_ADDRESSES.filter(a => a.address.toLowerCase().includes(val));
-        if (matches.length === 0) {
-            dropdown.style.display = 'none';
-            return;
-        }
-        dropdown.innerHTML = matches.map(a => `
-      <div class="autocomplete-item" onclick="selectAddress('${a.address}','${a.city}','${a.state}','${a.zip}','${a.lat}','${a.lng}')">
-        📍 ${a.address}, ${a.city}, ${a.state} ${a.zip}
-      </div>
-    `).join('');
-        dropdown.style.display = 'block';
-    });
-    document.addEventListener('click', (e) => {
-        if (e.target !== input)
-            dropdown.style.display = 'none';
-    });
-}
-function selectAddress(address, city, state, zip, lat, lng) {
-    const set = (id, value) => {
-        const el = document.getElementById(id);
-        if (el)
-            el.value = value;
-    };
-    set('addressInput', address);
-    set('cityInput', city);
-    set('stateInput', state);
-    set('zipInput', zip);
-    set('latInput', lat);
-    set('lngInput', lng);
-    const dropdown = document.getElementById('autocompleteDropdown');
-    if (dropdown)
-        dropdown.style.display = 'none';
+    // Google Places Autocomplete is wired up in attachPlacesAutocomplete()
+    // once the Maps script finishes loading. Nothing to do here until then.
 }
 // ============================================================
 // TOAST NOTIFICATION
@@ -2555,7 +3264,6 @@ function showToast(message) {
 // ============================================================
 // GOOGLE MAPS INTEGRATION
 // Activates automatically when GOOGLE_MAPS_API_KEY (top of file) is set.
-// With no key, every function below no-ops and the app stays in mock mode.
 // ============================================================
 
 // ---- Map color themes (light = Google default, dark = custom) ----
@@ -2584,13 +3292,13 @@ function activeMapStyle() {
 }
 function applyMapTheme() {
     const style = activeMapStyle();
-    [mainMap, detailMap, nearbyMap].forEach(m => { if (m) m.setOptions({ styles: style }); });
+    [homePreviewMap, mainMap, detailMap, nearbyMap].forEach(m => { if (m) m.setOptions({ styles: style }); });
 }
 
 // ---- Category-colored teardrop marker icon ----
 function pinColor(cat) {
     if (cat === 'yard') return '#16a34a';
-    if (cat === 'garage') return '#2563eb';
+    if (cat === 'garage') return '#3DB2FF';
     if (cat === 'estate') return '#7c3aed';
     return '#f97316';
 }
@@ -2606,13 +3314,13 @@ function markerIcon(cat) {
     };
 }
 function userDot() {
-    return { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#2563eb', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 3 };
+    return { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#3DB2FF', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 3 };
 }
 
 // ---- Script loader ----
 function loadGoogleMaps() {
     if (!GOOGLE_MAPS_API_KEY) {
-        console.info('YardHop: no Google Maps API key set — running in mock mode.');
+        console.info('YardHop: no Google Maps API key set — maps disabled.');
         return;
     }
     if (window.google && window.google.maps) { onMapsReady(); return; }
@@ -2641,10 +3349,9 @@ function onMapsReady() {
 function initHomePreviewMap() {
     const el = document.getElementById('mapPreview');
     if (!el || !mapsReady) return;
-    // Remove the mock pins — the real map replaces them
-    const mockPins = document.getElementById('mapMockPins');
-    if (mockPins) mockPins.remove();
-    const previewMap = new google.maps.Map(el, {
+    const oldPins = document.getElementById('mapPins');
+    if (oldPins) oldPins.remove();
+    homePreviewMap = new google.maps.Map(el, {
         center: userLocation || DEFAULT_CENTER,
         zoom: 11,
         styles: activeMapStyle(),
@@ -2652,21 +3359,24 @@ function initHomePreviewMap() {
         gestureHandling: 'none',
         clickableIcons: false,
     });
-    MOCK_LISTINGS.forEach(l => {
+    listings.forEach(l => {
         new google.maps.Marker({
             position: { lat: l.lat, lng: l.lng },
-            map: previewMap,
+            map: homePreviewMap,
             icon: markerIcon(l.category),
             title: l.title,
         });
     });
+    if (userLocation) {
+        homeUserMarker = new google.maps.Marker({ position: userLocation, map: homePreviewMap, title: 'You are here', zIndex: 9999, icon: userDot() });
+    }
 }
 
 // ---- Main map (Map page) ----
 function initMainMap() {
-    const el = document.getElementById('fullMapMock');
+    const el = document.getElementById('fullMapEl');
     if (!el || mainMap) return;
-    el.innerHTML = '';            // clear the mock overlay
+    el.innerHTML = '';
     el.style.cursor = 'default';
     mainMap = new google.maps.Map(el, {
         center: userLocation || DEFAULT_CENTER,
@@ -2685,8 +3395,8 @@ function refreshMainMarkers() {
     mainMarkers.forEach(m => m.setMap(null));
     mainMarkers = [];
     const list = currentMapCategory
-        ? MOCK_LISTINGS.filter(l => l.category === currentMapCategory)
-        : MOCK_LISTINGS;
+        ? listings.filter(l => l.category === currentMapCategory)
+        : listings;
     const info = new google.maps.InfoWindow();
     list.forEach(l => {
         const marker = new google.maps.Marker({
@@ -2699,7 +3409,7 @@ function refreshMainMarkers() {
                 '<div style="font-family:sans-serif;max-width:200px;color:#1a1714">' +
                 '<strong>' + l.title + '</strong><br>' +
                 '<span style="color:#5a5550;font-size:12px">' + l.city + ', ' + l.state + '</span><br>' +
-                '<a href="#" style="color:#2563eb" onclick="showDetail(\'' + l.id + '\');return false;">View details →</a>' +
+                '<a href="#" style="color:#3DB2FF" onclick="showDetail(\'' + l.id + '\');return false;">View details →</a>' +
                 '</div>'
             );
             info.open(mainMap, marker);
@@ -2716,7 +3426,7 @@ function refreshMainMarkers() {
 
 // ---- Detail page mini-map ----
 function initDetailMiniMap(listing) {
-    if (!mapsReady) return; // keep the mock box in offline mode
+    if (!mapsReady) return;
     const el = document.getElementById('detailMiniMap');
     if (!el) return;
     el.innerHTML = '';
@@ -2737,7 +3447,7 @@ function initDetailMiniMap(listing) {
 // ---- Nearby page map ----
 function initNearbyMap() {
     if (!mapsReady) return;
-    const el = document.getElementById('nearbyMapMock');
+    const el = document.getElementById('nearbyMapEl');
     if (!el) return;
     if (!nearbyMap) {
         el.innerHTML = '';
@@ -2749,7 +3459,7 @@ function initNearbyMap() {
             streetViewControl: false,
             fullscreenControl: false,
         });
-        MOCK_LISTINGS.forEach(l => {
+        listings.forEach(l => {
             const marker = new google.maps.Marker({
                 position: { lat: l.lat, lng: l.lng },
                 map: nearbyMap,
@@ -2781,6 +3491,16 @@ function requestUserLocation() {
             renderNearbyPage();
             renderMapSidebar();
             addOrMoveUserMarker();
+            if (nearbyMap) {
+                nearbyMap.setCenter(userLocation);
+                if (nearbyUserMarker) { nearbyUserMarker.setPosition(userLocation); }
+                else { nearbyUserMarker = new google.maps.Marker({ position: userLocation, map: nearbyMap, title: 'You are here', zIndex: 9999, icon: userDot() }); }
+            }
+            if (homePreviewMap) {
+                homePreviewMap.setCenter(userLocation);
+                if (homeUserMarker) { homeUserMarker.setPosition(userLocation); }
+                else { homeUserMarker = new google.maps.Marker({ position: userLocation, map: homePreviewMap, title: 'You are here', zIndex: 9999, icon: userDot() }); }
+            }
             showToast('📍 Found you — sales sorted by distance');
         },
         err => {
@@ -2803,7 +3523,7 @@ function distanceMiles(lat1, lng1, lat2, lng2) {
 // Replace each listing's distance with the real value from the user
 function recomputeDistances() {
     if (!userLocation) return;
-    MOCK_LISTINGS.forEach(l => {
+    listings.forEach(l => {
         l.distance = Math.round(distanceMiles(userLocation.lat, userLocation.lng, l.lat, l.lng) * 10) / 10;
     });
 }
@@ -2816,7 +3536,64 @@ function addOrMoveUserMarker() {
 }
 
 // ============================================================
-// GOOGLE PLACES AUTOCOMPLETE (replaces the mock address dropdown)
+// INLINE DELETE CONFIRMATION
+// ============================================================
+function drawerUnfavorite(event, id) {
+    toggleFavorite(event, id);
+    renderMenuDrawer();
+}
+function drawerDeleteConfirm(id) {
+    const item = document.getElementById('drawer-item-' + id);
+    if (!item) return;
+    item.innerHTML = `
+        <div class="drawer-delete-confirm">
+            <span>Delete this listing?</span>
+            <div class="drawer-delete-actions">
+                <button class="btn btn-primary" onclick="confirmDeleteListing('${id}')">Delete</button>
+                <button class="btn btn-ghost" onclick="renderMenuDrawer()">Cancel</button>
+            </div>
+        </div>`;
+}
+function showDeleteConfirm(id) {
+    const existing = document.getElementById('deleteConfirmBox');
+    if (existing) { existing.remove(); return; }
+    const manageBar = document.querySelector('.detail-manage-bar');
+    if (!manageBar) return;
+    const box = document.createElement('div');
+    box.id = 'deleteConfirmBox';
+    box.className = 'delete-confirm-box';
+    box.innerHTML = `
+        <p>Are you sure you want to delete this listing?</p>
+        <div class="delete-confirm-actions">
+            <button class="btn btn-primary" onclick="confirmDeleteListing('${id}')">Delete</button>
+            <button class="btn btn-ghost" onclick="cancelDeleteListing()">Cancel</button>
+        </div>`;
+    manageBar.after(box);
+}
+function cancelDeleteListing() {
+    const box = document.getElementById('deleteConfirmBox');
+    if (box) box.remove();
+}
+function confirmDeleteListing(id) {
+    const idx = listings.findIndex(l => l.id === id);
+    if (idx !== -1) listings.splice(idx, 1);
+    filteredListings = filteredListings.filter(l => l.id !== id);
+    myListingIds.delete(id);
+    endedSaleIds.delete(id);
+    saveUserData();
+    updateCategoryCounts();
+    renderFeaturedListings();
+    renderNearbyListings();
+    renderMapPins();
+    renderMapSidebar();
+    refreshMainMarkers();
+    renderMenuDrawer();
+    showToast('🗑️ Listing deleted');
+    showPage('nearby');
+}
+
+// ============================================================
+// GOOGLE PLACES AUTOCOMPLETE
 // ============================================================
 function attachPlacesAutocomplete() {
     if (!mapsReady || !google.maps.places) return;
@@ -2846,9 +3623,8 @@ function attachPlacesAutocomplete() {
         set('latInput', place.geometry.location.lat());
         set('lngInput', place.geometry.location.lng());
     });
-    // Hide the mock dropdown now that Google powers this field
-    const mockDropdown = document.getElementById('autocompleteDropdown');
-    if (mockDropdown) mockDropdown.style.display = 'none';
+    const dropdown = document.getElementById('autocompleteDropdown');
+    if (dropdown) dropdown.style.display = 'none';
 }
 // Expose functions to window for HTML onclick attributes
 window.showPage = showPage;
@@ -2862,15 +3638,161 @@ window.setView = setView;
 window.filterMap = filterMap;
 window.toggleDiscount = toggleDiscount;
 window.selectDiscount = selectDiscount;
+// ============================================================
+// USER LISTING MANAGEMENT
+// ============================================================
+function loadUserData() {
+    try {
+        const ids = localStorage.getItem('yardhop-my-ids');
+        if (ids) myListingIds = new Set(JSON.parse(ids));
+        const ended = localStorage.getItem('yardhop-ended-sales');
+        if (ended) endedSaleIds = new Set(JSON.parse(ended));
+        const saved = localStorage.getItem('yardhop-user-listings');
+        if (saved) {
+            const userListings = JSON.parse(saved);
+            userListings.forEach(l => { if (!listings.find(m => m.id === l.id)) listings.unshift(l); });
+            filteredListings = [...listings];
+        }
+    } catch(e) {}
+}
+function saveUserData() {
+    const userListings = listings.filter(l => myListingIds.has(l.id));
+    localStorage.setItem('yardhop-my-ids', JSON.stringify([...myListingIds]));
+    localStorage.setItem('yardhop-ended-sales', JSON.stringify([...endedSaleIds]));
+    localStorage.setItem('yardhop-user-listings', JSON.stringify(userListings));
+}
+function endSale(id) {
+    if (endedSaleIds.has(id)) {
+        endedSaleIds.delete(id);
+        showToast('✅ Sale reopened!');
+    } else {
+        endedSaleIds.add(id);
+        showToast('🚫 Sale marked as ended');
+    }
+    saveUserData();
+    showDetail(id);
+}
+function restoreTimePicker(which, timeStr) {
+    if (!timeStr) return;
+    const parts = timeStr.split(':');
+    const h24 = parseInt(parts[0]);
+    const min = parseInt(parts[1]) || 0;
+    const ampm = h24 >= 12 ? 'PM' : 'AM';
+    const hour = h24 % 12 || 12;
+    timePickerState[which] = { hour, min, ampm, confirmed: true };
+    const input = document.getElementById(which + 'TimeInput');
+    if (input) input.value = timeStr;
+    const valEl = document.getElementById(which + 'TimeVal');
+    if (valEl) {
+        valEl.textContent = hour + ':' + String(min).padStart(2, '0') + ' ' + ampm;
+        valEl.classList.remove('time-picker-placeholder');
+    }
+    const amEl = document.getElementById(which + 'TimeAM');
+    const pmEl = document.getElementById(which + 'TimePM');
+    if (amEl) amEl.classList.toggle('active', ampm === 'AM');
+    if (pmEl) pmEl.classList.toggle('active', ampm === 'PM');
+}
+function editListing(id) {
+    const listing = listings.find(l => l.id === id);
+    if (!listing) return;
+    showPage('create');          // resets form first (clears editingListingId too)
+    editingListingId = id;       // re-apply after the reset
+    const set = (elId, val) => { const el = document.getElementById(elId); if (el) el.value = val || ''; };
+    set('titleInput', listing.title);
+    set('descriptionInput', listing.description);
+    set('categoryInput', listing.category);
+    set('startDateInput', listing.startDate);
+    set('endDateInput', listing.endDate);
+    set('addressInput', listing.address);
+    set('cityInput', listing.city);
+    set('stateInput', listing.state);
+    set('zipInput', listing.zip);
+    set('latInput', listing.lat);
+    set('lngInput', listing.lng);
+    set('sellerNameInput', listing.sellerName || '');
+    set('sellerContactInput', listing.sellerContact || '');
+    if (listing.discount) {
+        const toggleEl = document.getElementById('discountToggle');
+        if (toggleEl) { toggleEl.checked = true; toggleDiscount(); }
+        set('discountValue', listing.discount);
+    }
+    // Restore photos and crop state
+    photoFiles = [...(listing.photos || [])];
+    coverPhotoIndex = listing.coverIndex || 0;
+    cropState = { x: listing.cropX || 50, y: listing.cropY || 50, zoom: listing.cropZoom || 100 };
+    renderPhotoPreview();
+    // Restore time pickers
+    restoreTimePicker('start', listing.startTime);
+    restoreTimePicker('end', listing.endTime);
+    const btn = document.querySelector('#createForm button[type="submit"]');
+    if (btn) btn.textContent = 'Update Listing';
+}
 window.submitListing = submitListing;
 window.handlePhotoUpload = handlePhotoUpload;
 window.removePhoto = removePhoto;
-window.selectAddress = selectAddress;
 window.switchGalleryPhoto = switchGalleryPhoto;
 window.openDirections = openDirections;
 window.shareListing = shareListing;
 window.onMapsReady = onMapsReady; // Google Maps script callback
+window.endSale = endSale;
+window.deleteListing = deleteListing;
+window.editListing = editListing;
+window.showDeleteConfirm = showDeleteConfirm;
+window.cancelDeleteListing = cancelDeleteListing;
+window.confirmDeleteListing = confirmDeleteListing;
+window.drawerDeleteConfirm = drawerDeleteConfirm;
+window.drawerUnfavorite = drawerUnfavorite;
+window.renderMenuDrawer = renderMenuDrawer;
+window.openMenuDrawer = openMenuDrawer;
+window.closeMenuDrawer = closeMenuDrawer;
+window.deleteListing = deleteListing;
+window.togglePushNotifications = togglePushNotifications;
+window.resetCreateForm = resetCreateForm;
+window.validateStartDate = validateStartDate;
+window.validateStartTime = validateStartTime;
+window.validateEndDate = validateEndDate;
+window.validateEndTime = validateEndTime;
+window.openTimePicker = openTimePicker;
+window.setPickerAmPm = setPickerAmPm;
+window.confirmTimePicker = confirmTimePicker;
+window.cancelTimePicker = cancelTimePicker;
+window.setCoverPhoto = setCoverPhoto;
+window.openCropModal = openCropModal;
+window.onCropZoom = onCropZoom;
+window.saveCrop = saveCrop;
+window.cancelCrop = cancelCrop;
 
 </script>
+
+<!-- ===== CROP MODAL ===== -->
+<div class="crop-modal-overlay" id="cropModalOverlay">
+  <div class="crop-modal">
+    <h3>Adjust Cover Photo</h3>
+    <p class="crop-modal-hint">Drag to reposition · use the slider to zoom</p>
+    <div class="crop-frame-wrap" id="cropFrameWrap">
+      <img id="cropPreviewImg" alt="Cover preview" />
+    </div>
+    <div class="crop-zoom-row">
+      <label>Zoom</label>
+      <input type="range" id="cropZoomSlider" min="100" max="300" step="5" value="100" oninput="onCropZoom(this.value)" />
+      <span class="crop-zoom-val" id="cropZoomVal">1.0×</span>
+    </div>
+    <div class="crop-actions">
+      <button type="button" class="btn btn-ghost" onclick="cancelCrop()">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="saveCrop()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MENU DRAWER ===== -->
+<div class="menu-overlay" id="menuOverlay" onclick="closeMenuDrawer()"></div>
+<div class="menu-drawer" id="menuDrawer">
+  <div class="menu-drawer-header">
+    <h3>Menu</h3>
+    <button class="menu-drawer-close" onclick="closeMenuDrawer()">✕</button>
+  </div>
+  <div class="menu-drawer-body" id="menuDrawerBody"></div>
+</div>
+
 </body>
 </html>
