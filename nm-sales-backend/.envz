@@ -1,6 +1,0 @@
-# Database connection - get this from Tai
-DATABASE_URL=postgresql://postgres:Ihopethiswillwork@db.gzzafeufatnttbgwndqg.supabase.co:5432/postgres
-
-# Supabase project details
-SUPABASE_URL=https://supabase.com/dashboard/project/gzzafeufatnttbgwndqg
-SUPABASE_KEY=your_supabase_anon_key_hereeyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6emFmZXVmYXRudHRiZ3duZHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2ODA2MTMsImV4cCI6MjA5NjI1NjYxM30.yvvqWxY4v7sYK-l_aKkipaEWWNQiKfcUO26dBzjyfmg
