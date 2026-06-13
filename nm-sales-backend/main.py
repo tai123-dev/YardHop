@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import Optional
-from datetime import date, time, datetime, timedelta
+from datetime import date, time, datetime, timedelta, date as DateType
 import psycopg2
 import uuid
 import os
@@ -98,13 +98,22 @@ def root():
 # ── Sales ─────────────────────────────────────────────────
 
 @app.get("/sales")
-def get_sales():
+def get_sales(city: Optional[str] = None, date: Optional[DateType] = None):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute(
-            "SELECT id, title, address, city, zip, date, start_time, end_time, description, categories FROM sales"
+        query = (
+            "SELECT id, title, address, city, zip, date, start_time, end_time, description, categories "
+            "FROM sales WHERE 1=1"
         )
+        params = []
+        if city:
+            query += " AND LOWER(city) = LOWER(%s)"
+            params.append(city)
+        if date:
+            query += " AND date = %s"
+            params.append(date)
+        cursor.execute(query, params)
         rows = cursor.fetchall()
         return [
             {
@@ -140,18 +149,18 @@ def get_sale(sale_id: int):
 
 
 @app.post("/sales")
-def create_sale(sale: Sale):
+def create_sale(sale: Sale, user_id: str = Depends(get_current_user)):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT INTO sales (title, address, city, zip, date, start_time, end_time, description, categories)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO sales (title, address, city, zip, date, start_time, end_time, description, categories, user_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
             """,
             (sale.title, sale.address, sale.city, sale.zip or "", sale.date,
-             sale.start_time, sale.end_time or sale.start_time, sale.description or "", sale.categories or ""),
+             sale.start_time, sale.end_time or sale.start_time, sale.description or "", sale.categories or "", user_id),
         )
         new_id = cursor.fetchone()[0]
         conn.commit()
